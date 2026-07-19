@@ -1,6 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { liveReviews, siteInfo } from "../../data/siteData.js";
 import useReviews from "../../hooks/useReviews.js";
+
+const AUTO_SCROLL_INTERVAL_MS = 3200;
 
 const scrollByCard = (element, direction) => {
   if (!element) {
@@ -18,6 +20,35 @@ export default function LiveReviewSection() {
   const { reviews: connectedReviews, isLoading } = useReviews();
   const hasConnectedReviews = connectedReviews.length > 0;
   const reviews = hasConnectedReviews ? connectedReviews : liveReviews;
+  const shouldAutoScroll = reviews.length > 1;
+
+  useEffect(() => {
+    if (!shouldAutoScroll) {
+      return undefined;
+    }
+
+    const reviewList = reviewListRef.current;
+
+    if (!reviewList) {
+      return undefined;
+    }
+
+    const autoScrollTimer = window.setInterval(() => {
+      const maxScrollLeft = reviewList.scrollWidth - reviewList.clientWidth;
+      const isAtEnd = reviewList.scrollLeft >= maxScrollLeft - 8;
+
+      if (isAtEnd) {
+        reviewList.scrollTo({ left: 0, behavior: "smooth" });
+        return;
+      }
+
+      scrollByCard(reviewList, 1);
+    }, AUTO_SCROLL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(autoScrollTimer);
+    };
+  }, [reviews.length, shouldAutoScroll]);
 
   return (
     <section className="live-review-section" id="reviews" aria-labelledby="live-review-title">
@@ -59,7 +90,7 @@ export default function LiveReviewSection() {
                   <p>{review.text}</p>
                   <footer>
                     <strong>{review.author}</strong>
-                    <span>{review.time}</span>
+                    <span>{review.time ?? "최근 리뷰"}</span>
                   </footer>
                 </article>
               ))}

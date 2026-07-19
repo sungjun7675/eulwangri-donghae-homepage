@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
+const REVIEW_LIMIT = 20;
+const REVIEW_REFRESH_INTERVAL_MS = 60000;
+
 export default function useReviews() {
   const [state, setState] = useState({
     reviews: [],
@@ -16,15 +19,17 @@ export default function useReviews() {
 
     let isMounted = true;
 
-    const loadReviews = async () => {
-      setState((current) => ({ ...current, isLoading: true, error: null }));
+    const loadReviews = async ({ showLoading = false } = {}) => {
+      if (showLoading) {
+        setState((current) => ({ ...current, isLoading: true, error: null }));
+      }
 
       const { data, error } = await supabase
         .from("homepage_reviews")
-        .select("id, author, label, text, time, rating, sort_order")
+        .select("id, author, label, text, time, rating, created_at")
         .eq("is_published", true)
-        .order("sort_order", { ascending: true })
-        .limit(12);
+        .order("created_at", { ascending: false })
+        .limit(REVIEW_LIMIT);
 
       if (!isMounted) {
         return;
@@ -38,10 +43,14 @@ export default function useReviews() {
       });
     };
 
-    loadReviews();
+    loadReviews({ showLoading: true });
+    const refreshTimer = window.setInterval(() => {
+      loadReviews();
+    }, REVIEW_REFRESH_INTERVAL_MS);
 
     return () => {
       isMounted = false;
+      window.clearInterval(refreshTimer);
     };
   }, []);
 
