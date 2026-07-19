@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { liveReviews, siteInfo } from "../../data/siteData.js";
 import useReviews from "../../hooks/useReviews.js";
+import { formatPublicReviewText } from "../../utils/reviewText.js";
 
 const AUTO_SCROLL_INTERVAL_MS = 3200;
 
@@ -124,6 +125,7 @@ export default function LiveReviewSection() {
             >
               {reviews.map((review) => {
                 const imageUrls = Array.isArray(review.image_urls) ? review.image_urls : [];
+                const reviewText = formatPublicReviewText(review.text);
 
                 return (
                   <article className="review-card" key={review.id}>
@@ -133,7 +135,7 @@ export default function LiveReviewSection() {
                     >
                       {review.label ?? "★★★★★"}
                     </div>
-                    <p>{review.text}</p>
+                    <p>{reviewText}</p>
                     {imageUrls.length > 0 ? (
                       <div className="review-photo-row" aria-label="리뷰 사진">
                         {imageUrls.slice(0, 3).map((url) => (

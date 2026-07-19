@@ -584,13 +584,18 @@ main {
 }
 
 .review-card p {
+  display: -webkit-box;
   flex: 1;
   min-height: 58px;
+  max-height: 88px;
   margin: 10px 0 13px;
+  overflow: hidden;
   color: #fff;
   font-size: 14px;
   font-weight: 650;
   line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .review-photo-row {

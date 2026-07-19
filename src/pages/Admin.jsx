@@ -1,28 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
+import { normalizeOcrReviewText } from "../utils/reviewText.js";
 
 const REVIEW_PHOTO_BUCKET = "review-photos";
 const DEFAULT_ADMIN_EMAIL = "tjdrhkde@gmail.com";
-
-const noiseTerms = [
-  "방문자리뷰",
-  "블로그리뷰",
-  "리뷰",
-  "사진",
-  "더보기",
-  "네이버",
-  "영수증",
-  "예약",
-  "저장",
-  "공유",
-  "길찾기",
-  "전화",
-  "홈",
-  "메뉴",
-  "소식",
-  "쿠폰",
-];
 
 const makeStarLabel = (rating) => `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`;
 
@@ -43,15 +25,6 @@ const getInitialForm = () => ({
   text: "",
   isPublished: true,
 });
-
-const normalizeOcrText = (value) =>
-  value
-    .split("\n")
-    .map((line) => line.replace(/\s+/g, " ").trim())
-    .filter((line) => line.length > 1)
-    .filter((line) => !noiseTerms.some((term) => line.includes(term)))
-    .join("\n")
-    .slice(0, 900);
 
 const getSafeImageExtension = (file) => {
   const extension = file.name.split(".").pop()?.toLowerCase();
@@ -304,6 +277,17 @@ export default function Admin() {
     setPhotoFiles(selectedFiles);
   };
 
+  const handleCapturePhotoChange = (event) => {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile || !selectedFile.type.startsWith("image/")) {
+      return;
+    }
+
+    setPhotoFiles((current) => [...current, selectedFile]);
+    event.target.value = "";
+  };
+
   const uploadReviewPhotos = async () => {
     if (photoFiles.length === 0) {
       return [];
@@ -363,14 +347,20 @@ export default function Admin() {
       const {
         data: { text },
       } = await worker.recognize(selectedFile);
-      const cleanedText = normalizeOcrText(text);
+      const cleanedText = normalizeOcrReviewText(text);
+      const fallbackText = text.trim().slice(0, 900);
+      const nextText = cleanedText || fallbackText;
 
-      setOcrText(cleanedText || text.trim());
+      setOcrText(nextText);
       setForm((current) => ({
         ...current,
-        text: cleanedText || text.trim(),
+        text: nextText,
       }));
-      setOcrStatus("OCR 읽기가 완료되었습니다. 내용을 확인하고 필요한 부분만 남기세요.");
+      setOcrStatus(
+        cleanedText
+          ? "OCR 읽기와 자동 정제가 완료되었습니다. 내용을 확인하고 저장하세요."
+          : "OCR은 됐지만 자동 정제할 문장을 찾지 못했습니다. 직접 필요한 문구만 남기세요.",
+      );
     } catch (error) {
       setOcrStatus(`OCR 실패: ${error.message}`);
     } finally {
@@ -601,11 +591,23 @@ export default function Admin() {
                   <div className="admin-card admin-upload-card">
                     <p className="section-eyebrow">OCR</p>
                     <h2>캡처 읽기</h2>
-                    <p>리뷰 캡처나 사진을 선택하면 자동으로 글자를 읽어 리뷰 문구에 넣습니다.</p>
+                    <p>
+                      네이버 리뷰 화면 전체 캡처는 여기에 넣으세요. 이 이미지는 홈페이지에 표시하지
+                      않고 글자만 읽습니다.
+                    </p>
                     <label>
-                      리뷰 캡처 이미지
+                      앨범/캡처에서 선택
                       <input
                         accept="image/*"
+                        type="file"
+                        onChange={handleOcrFileChange}
+                      />
+                    </label>
+                    <label>
+                      카메라로 촬영
+                      <input
+                        accept="image/*"
+                        capture="environment"
                         type="file"
                         onChange={handleOcrFileChange}
                       />
@@ -634,12 +636,21 @@ export default function Admin() {
                     <p className="section-eyebrow">Photos</p>
                     <h2>리뷰 사진</h2>
                     <p>
-                      리뷰 작성자가 올린 음식 사진이 있으면 여기에 같이 올리세요. 여러 장을 선택할
-                      수 있습니다.
+                      홈페이지에 보일 음식 사진만 올리세요. 네이버 화면 전체 캡처를 여기에 넣으면
+                      홈페이지에도 캡처가 보입니다.
                     </p>
                     <label>
-                      홈페이지에 표시할 사진
+                      음식 사진 선택
                       <input accept="image/*" multiple type="file" onChange={handlePhotoChange} />
+                    </label>
+                    <label>
+                      카메라로 음식 사진 촬영
+                      <input
+                        accept="image/*"
+                        capture="environment"
+                        type="file"
+                        onChange={handleCapturePhotoChange}
+                      />
                     </label>
                     <FilePreviewGrid previews={photoPreviews} />
                   </div>
