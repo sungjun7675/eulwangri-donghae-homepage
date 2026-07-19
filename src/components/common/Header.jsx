@@ -1,19 +1,29 @@
 import { useState } from "react";
 import { navigationItems, siteInfo } from "../../data/siteData.js";
 
-export default function Header() {
+export default function Header({ currentPage = "home" }) {
   const [isOpen, setIsOpen] = useState(false);
   const reserveLinkProps = siteInfo.naverPlaceUrl
     ? { href: siteInfo.naverPlaceUrl, target: "_blank", rel: "noreferrer" }
     : { href: "#reservation" };
 
-  const handleNavClick = () => {
+  const handleNavClick = (event, item) => {
     setIsOpen(false);
+
+    if (item.id === currentPage) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   return (
     <header className="site-header">
-      <a className="brand" href="#home" aria-label="을왕리 동해회조개구이 홈">
+      <a
+        className="brand"
+        href="#home"
+        aria-label="을왕리 동해회조개구이 홈"
+        onClick={(event) => handleNavClick(event, { id: "home" })}
+      >
         <span className="brand-mark" aria-hidden="true">
           동해
         </span>
@@ -39,7 +49,13 @@ export default function Header() {
         aria-label="주요 메뉴"
       >
         {navigationItems.map((item) => (
-          <a key={item.href} href={item.href} onClick={handleNavClick}>
+          <a
+            className={item.id === currentPage ? "is-active" : undefined}
+            aria-current={item.id === currentPage ? "page" : undefined}
+            key={item.href}
+            href={item.href}
+            onClick={(event) => handleNavClick(event, item)}
+          >
             {item.label}
           </a>
         ))}

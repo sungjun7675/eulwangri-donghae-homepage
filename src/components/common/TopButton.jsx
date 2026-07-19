@@ -1,5 +1,3 @@
-import { scrollToTarget } from "../../utils/scrollTo.js";
-
 export default function TopButton() {
   return (
     <button
@@ -7,7 +5,7 @@ export default function TopButton() {
       type="button"
       aria-label="맨 위로 이동"
       title="맨 위로 이동"
-      onClick={() => scrollToTarget("#home")}
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
     >
       TOP
     </button>

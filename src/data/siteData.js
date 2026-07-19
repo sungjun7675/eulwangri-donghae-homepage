@@ -1,4 +1,4 @@
-import heroImage from "../assets/images/hero/real-grilled-shellfish-optimized.jpg";
+import heroImage from "../assets/images/hero/hero-seafood-photo.png";
 import assortedShellfishImage from "../assets/images/menu/real-assorted-shellfish-optimized.jpg";
 import grilledScallopImage from "../assets/images/menu/real-grilled-scallop-optimized.jpg";
 import seafoodKalguksuImage from "../assets/images/menu/real-seafood-kalguksu-optimized.jpg";
@@ -34,12 +34,12 @@ export const siteInfo = {
 };
 
 export const navigationItems = [
-  { label: "홈", href: "#home" },
-  { label: "메뉴", href: "#menu" },
-  { label: "매장소개", href: "#store" },
-  { label: "리뷰", href: "#reviews" },
-  { label: "찾아오시는길", href: "#location" },
-  { label: "이용안내", href: "#reservation" },
+  { id: "home", label: "홈", href: "#home" },
+  { id: "menu", label: "메뉴", href: "#menu" },
+  { id: "store", label: "매장소개", href: "#store" },
+  { id: "reviews", label: "리뷰", href: "#reviews" },
+  { id: "location", label: "찾아오시는길", href: "#location" },
+  { id: "reservation", label: "이용안내", href: "#reservation" },
 ];
 
 export const reviewSummary = {

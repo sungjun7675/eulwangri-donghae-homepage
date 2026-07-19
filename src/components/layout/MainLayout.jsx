@@ -4,11 +4,11 @@ import MobileActionBar from "../common/MobileActionBar.jsx";
 import StructuredData from "../common/StructuredData.jsx";
 import TopButton from "../common/TopButton.jsx";
 
-export default function MainLayout({ children }) {
+export default function MainLayout({ children, currentPage }) {
   return (
     <div className="site-shell">
       <StructuredData />
-      <Header />
+      <Header currentPage={currentPage} />
       <main>{children}</main>
       <Footer />
       <MobileActionBar />

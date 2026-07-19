@@ -176,12 +176,12 @@ main {
   transition: width 180ms ease;
 }
 
-.primary-nav a:first-child,
+.primary-nav a.is-active,
 .primary-nav a:hover {
   color: var(--color-gold-bright);
 }
 
-.primary-nav a:first-child::after,
+.primary-nav a.is-active::after,
 .primary-nav a:hover::after {
   width: 12px;
 }
@@ -684,6 +684,69 @@ main {
   padding-bottom: 28px;
 }
 
+.subpage-view {
+  min-height: calc(100vh - 120px);
+  padding: 146px 0 58px;
+}
+
+.subpage-heading {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.subpage-heading h1,
+.subpage-heading p {
+  margin: 0;
+}
+
+.subpage-heading h1 {
+  color: #fff;
+  font-family: "Noto Serif KR", "Nanum Myeongjo", serif;
+  font-size: 44px;
+  line-height: 1.18;
+}
+
+.subpage-heading > p:not(.section-eyebrow) {
+  max-width: 680px;
+  color: var(--color-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.subpage-content {
+  display: grid;
+  gap: 28px;
+}
+
+.subpage-card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.subpage-location .subpage-card-grid {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+}
+
+.subpage-view .live-review-section {
+  margin-top: 0;
+}
+
+.subpage-view .feature-strip {
+  padding: 0;
+  background: transparent;
+}
+
+.subpage-view .feature-strip-inner {
+  width: min(100% - 80px, 1080px);
+}
+
+.subpage-view .reservation-section,
+.subpage-view .gallery-section,
+.subpage-view .notice-section {
+  padding: 0;
+}
+
 .summary-card {
   min-width: 0;
   min-height: 220px;
@@ -1124,6 +1187,10 @@ main {
     grid-template-columns: 1fr;
   }
 
+  .subpage-location .subpage-card-grid {
+    grid-template-columns: 1fr;
+  }
+
   .store-card {
     grid-template-columns: 1fr 1fr;
   }
@@ -1167,6 +1234,10 @@ main {
   .primary-nav a {
     padding: 14px 12px;
     border-radius: 6px;
+  }
+
+  .primary-nav a::after {
+    display: none;
   }
 
   .hero-section {
@@ -1225,6 +1296,14 @@ main {
   .feature-strip-inner {
     grid-template-columns: 1fr 1fr;
     gap: 18px;
+  }
+
+  .subpage-view {
+    padding-top: 118px;
+  }
+
+  .subpage-heading h1 {
+    font-size: 38px;
   }
 
   .menu-list {
@@ -1333,6 +1412,26 @@ main {
   .review-panel-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .subpage-view {
+    padding: 108px 0 34px;
+  }
+
+  .subpage-heading {
+    margin-bottom: 18px;
+  }
+
+  .subpage-heading h1 {
+    font-size: 32px;
+  }
+
+  .subpage-heading > p:not(.section-eyebrow) {
+    font-size: 14px;
+  }
+
+  .subpage-view .feature-strip-inner {
+    width: min(100% - 24px, var(--layout-max-width));
   }
 
   .feature-strip-inner,
