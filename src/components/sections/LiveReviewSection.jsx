@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { liveReviews, siteInfo } from "../../data/siteData.js";
 import useReviews from "../../hooks/useReviews.js";
-import { formatPublicReviewText } from "../../utils/reviewText.js";
+import {
+  formatPublicReviewAuthor,
+  formatPublicReviewText,
+  formatPublicReviewTime,
+} from "../../utils/reviewText.js";
 
 const AUTO_SCROLL_INTERVAL_MS = 3200;
 
@@ -126,6 +130,8 @@ export default function LiveReviewSection() {
               {reviews.map((review) => {
                 const imageUrls = Array.isArray(review.image_urls) ? review.image_urls : [];
                 const reviewText = formatPublicReviewText(review.text);
+                const reviewAuthor = formatPublicReviewAuthor(review);
+                const reviewTime = formatPublicReviewTime(review);
 
                 return (
                   <article className="review-card" key={review.id}>
@@ -144,8 +150,8 @@ export default function LiveReviewSection() {
                       </div>
                     ) : null}
                     <footer>
-                      <strong>{review.author}</strong>
-                      <span>{review.time ?? "최근 리뷰"}</span>
+                      <strong>{reviewAuthor}</strong>
+                      <span>{reviewTime}</span>
                     </footer>
                   </article>
                 );

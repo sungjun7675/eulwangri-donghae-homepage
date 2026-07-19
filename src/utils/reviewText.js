@@ -79,6 +79,97 @@ export const normalizeOcrReviewText = (value, maxLength = 900) =>
     .replace(/[.·]{4,}/g, "...")
     .slice(0, maxLength);
 
+const getCandidateLines = (value) =>
+  String(value ?? "")
+    .split(/\r?\n/)
+    .map(normalizeLine)
+    .filter((line) => line.length > 1);
+
+const cleanAuthorCandidate = (line) =>
+  line
+    .replace(/^[A-Za-z]\s+(?=[가-힣])/u, "")
+    .replace(/[^\p{L}\p{N}_-]+/gu, "")
+    .trim();
+
+const extractAuthor = (value) => {
+  const candidates = getCandidateLines(value)
+    .filter((line) => !noiseTerms.some((term) => line.includes(term)))
+    .filter((line) => !noisePatterns.some((pattern) => pattern.test(line)))
+    .map(cleanAuthorCandidate)
+    .filter((line) => {
+      const hangulCount = (line.match(/[가-힣]/g) ?? []).length;
+      const digitCount = (line.match(/\d/g) ?? []).length;
+
+      return hangulCount >= 2 && line.length >= 3 && line.length <= 18 && digitCount <= 6;
+    });
+
+  return candidates[0] ?? "";
+};
+
+const extractTime = (value) => {
+  const lines = getCandidateLines(value).filter(
+    (line) => !line.includes("동해회조개구이") && !line.includes("을왕리"),
+  );
+
+  for (const line of lines) {
+    const fullDateMatch = line.match(/(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/);
+
+    if (fullDateMatch) {
+      return `${Number(fullDateMatch[2])}.${Number(fullDateMatch[3])}.`;
+    }
+
+    const shortDateMatch = line.match(/(^|[^0-9])(\d{1,2})\s*[.월]\s*(\d{1,2})\s*[.일]?\s*([월화수목금토일])?/);
+
+    if (shortDateMatch) {
+      const weekday = shortDateMatch[4] ? shortDateMatch[4] : "";
+
+      return `${Number(shortDateMatch[2])}.${Number(shortDateMatch[3])}.${weekday}`;
+    }
+  }
+
+  return "";
+};
+
+const extractRating = (value) => {
+  const text = String(value ?? "");
+  const starMatch = text.match(/[★⭐]\s*([1-5])/);
+  const labelMatch = text.match(/(?:별점|평점)\s*([1-5])/);
+
+  return Number(starMatch?.[1] ?? labelMatch?.[1] ?? 5);
+};
+
+export const maskReviewAuthor = (author) => {
+  const cleanAuthor = String(author ?? "").trim();
+
+  if (!cleanAuthor || cleanAuthor.includes("*")) {
+    return cleanAuthor;
+  }
+
+  const characters = Array.from(cleanAuthor);
+
+  if (characters.length <= 2) {
+    return `${characters[0] ?? ""}*`;
+  }
+
+  if (characters.length <= 4) {
+    return `${characters[0]}**${characters.at(-1)}`;
+  }
+
+  return `${characters.slice(0, 2).join("")}**${characters.slice(-2).join("")}`;
+};
+
+export const extractReviewMetadata = (value) => {
+  const author = extractAuthor(value);
+
+  return {
+    author: maskReviewAuthor(author),
+    rawAuthor: author,
+    rating: extractRating(value),
+    text: normalizeOcrReviewText(value),
+    time: extractTime(value),
+  };
+};
+
 export const formatPublicReviewText = (value, maxLength = 180) => {
   const normalizedText = normalizeOcrReviewText(value, maxLength).replace(/\s*\n\s*/g, " ");
 
@@ -91,3 +182,17 @@ export const formatPublicReviewText = (value, maxLength = 180) => {
     .trim()
     .slice(0, maxLength);
 };
+
+export const formatPublicReviewAuthor = (review) => {
+  const currentAuthor = String(review?.author ?? "").trim();
+  const shouldExtractAuthor = !currentAuthor || /^방문자\*+/.test(currentAuthor);
+
+  if (!shouldExtractAuthor) {
+    return maskReviewAuthor(currentAuthor);
+  }
+
+  return extractReviewMetadata(review?.text).author || "작성자 확인";
+};
+
+export const formatPublicReviewTime = (review) =>
+  extractReviewMetadata(review?.text).time || review?.time || "최근 리뷰";

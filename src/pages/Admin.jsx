@@ -1,30 +1,75 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
-import { normalizeOcrReviewText } from "../utils/reviewText.js";
+import { extractReviewMetadata, maskReviewAuthor } from "../utils/reviewText.js";
 
 const REVIEW_PHOTO_BUCKET = "review-photos";
 const DEFAULT_ADMIN_EMAIL = "tjdrhkde@gmail.com";
 
 const makeStarLabel = (rating) => `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`;
 
-const getTodayInputValue = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
 const getInitialForm = () => ({
-  author: "방문자****",
+  author: "",
   rating: 5,
-  time: getTodayInputValue(),
+  time: "",
   sourceUrl: siteInfo.naverPlaceUrl,
   text: "",
   isPublished: true,
 });
+
+const canvasToBlob = (canvas, type = "image/jpeg", quality = 0.88) =>
+  new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+
+const createDisplayPhotoFromReviewImage = async (file) => {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const isTallScreenshot = bitmap.height / bitmap.width > 1.35;
+    const sourceWidth = bitmap.width;
+    const sourceHeight = bitmap.height;
+    const crop = isTallScreenshot
+      ? {
+          x: Math.round(sourceWidth * 0.04),
+          y: Math.round(sourceHeight * 0.35),
+          width: Math.round(sourceWidth * 0.92),
+          height: Math.round(Math.min(sourceHeight * 0.29, sourceWidth * 0.68)),
+        }
+      : {
+          x: 0,
+          y: 0,
+          width: sourceWidth,
+          height: sourceHeight,
+        };
+    const canvas = document.createElement("canvas");
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const context = canvas.getContext("2d");
+
+    context.drawImage(
+      bitmap,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      crop.width,
+      crop.height,
+    );
+
+    const blob = await canvasToBlob(canvas);
+    bitmap.close();
+
+    if (!blob) {
+      return file;
+    }
+
+    return new File([blob], `review-photo-${Date.now()}.jpg`, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+};
 
 const getSafeImageExtension = (file) => {
   const extension = file.name.split(".").pop()?.toLowerCase();
@@ -274,7 +319,25 @@ export default function Admin() {
       file.type.startsWith("image/"),
     );
 
-    setPhotoFiles(selectedFiles);
+    setPhotoFiles((current) => [...current, ...selectedFiles]);
+    event.target.value = "";
+  };
+
+  const handleUnifiedReviewImageChange = async (event) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+
+    if (!selectedFile || !selectedFile.type.startsWith("image/")) {
+      return;
+    }
+
+    setOcrFile(selectedFile);
+    setOcrText("");
+    setSubmitStatus("업로드한 이미지에서 리뷰 내용과 표시 사진을 준비하는 중입니다.");
+    handleReadOcr(selectedFile);
+
+    const displayPhoto = await createDisplayPhotoFromReviewImage(selectedFile);
+    setPhotoFiles([displayPhoto]);
+    event.target.value = "";
   };
 
   const handleCapturePhotoChange = (event) => {
@@ -347,14 +410,18 @@ export default function Admin() {
       const {
         data: { text },
       } = await worker.recognize(selectedFile);
-      const cleanedText = normalizeOcrReviewText(text);
+      const extractedReview = extractReviewMetadata(text);
+      const cleanedText = extractedReview.text;
       const fallbackText = text.trim().slice(0, 900);
-      const nextText = cleanedText || fallbackText;
+      const nextText = cleanedText;
 
-      setOcrText(nextText);
+      setOcrText(nextText || fallbackText);
       setForm((current) => ({
         ...current,
-        text: nextText,
+        author: extractedReview.author || current.author,
+        rating: extractedReview.rating || current.rating,
+        time: extractedReview.time || current.time,
+        text: nextText || current.text,
       }));
       setOcrStatus(
         cleanedText
@@ -369,19 +436,6 @@ export default function Admin() {
       }
 
       setIsReadingOcr(false);
-    }
-  };
-
-  const handleOcrFileChange = (event) => {
-    const selectedFile = event.target.files?.[0] ?? null;
-
-    setOcrFile(selectedFile);
-    setOcrText("");
-
-    if (selectedFile) {
-      handleReadOcr(selectedFile);
-    } else {
-      setOcrStatus("");
     }
   };
 
@@ -414,6 +468,11 @@ export default function Admin() {
       return;
     }
 
+    if (!form.author.trim()) {
+      setSubmitStatus("작성자 아이디를 확인하세요. 캡처에서 못 읽은 경우 직접 입력해야 합니다.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus("사진을 업로드하고 리뷰를 저장하는 중입니다.");
 
@@ -421,7 +480,7 @@ export default function Admin() {
       const rating = Number(form.rating);
       const imageUrls = await uploadReviewPhotos();
       const { error } = await supabase.from("homepage_reviews").insert({
-        author: form.author.trim() || "방문자****",
+        author: maskReviewAuthor(form.author.trim()),
         label: makeStarLabel(rating),
         text: form.text.trim(),
         time: form.time || null,
@@ -536,10 +595,16 @@ export default function Admin() {
                 <form className="admin-grid" onSubmit={handleSubmitReview}>
                   <div className="admin-card admin-form-card">
                     <p className="section-eyebrow">Review</p>
-                    <h2>리뷰 내용</h2>
+                    <h2>자동 입력 결과</h2>
                     <label>
                       작성자 표시명
-                      <input name="author" value={form.author} onChange={handleFormChange} required />
+                      <input
+                        name="author"
+                        placeholder="예: 하늘**48"
+                        value={form.author}
+                        onChange={handleFormChange}
+                        required
+                      />
                     </label>
                     <div className="admin-inline-fields">
                       <label>
@@ -554,7 +619,12 @@ export default function Admin() {
                       </label>
                       <label>
                         리뷰 날짜
-                        <input name="time" type="date" value={form.time} onChange={handleFormChange} />
+                        <input
+                          name="time"
+                          placeholder="예: 5.3.일"
+                          value={form.time}
+                          onChange={handleFormChange}
+                        />
                       </label>
                     </div>
                     <label>
@@ -589,27 +659,27 @@ export default function Admin() {
                   </div>
 
                   <div className="admin-card admin-upload-card">
-                    <p className="section-eyebrow">OCR</p>
-                    <h2>캡처 읽기</h2>
+                    <p className="section-eyebrow">One Shot</p>
+                    <h2>사진 한 장으로 자동 등록</h2>
                     <p>
-                      네이버 리뷰 화면 전체 캡처는 여기에 넣으세요. 이 이미지는 홈페이지에 표시하지
-                      않고 글자만 읽습니다.
+                      네이버 리뷰 캡처나 리뷰 사진을 한 장 올리면 작성자, 날짜, 별점, 본문을 읽고
+                      홈페이지 표시 사진까지 자동 준비합니다.
                     </p>
                     <label>
-                      앨범/캡처에서 선택
+                      앨범/캡처에서 한 장 선택
                       <input
                         accept="image/*"
                         type="file"
-                        onChange={handleOcrFileChange}
+                        onChange={handleUnifiedReviewImageChange}
                       />
                     </label>
                     <label>
-                      카메라로 촬영
+                      카메라로 한 장 촬영
                       <input
                         accept="image/*"
                         capture="environment"
                         type="file"
-                        onChange={handleOcrFileChange}
+                        onChange={handleUnifiedReviewImageChange}
                       />
                     </label>
                     <button
@@ -633,18 +703,17 @@ export default function Admin() {
                   </div>
 
                   <div className="admin-card admin-upload-card">
-                    <p className="section-eyebrow">Photos</p>
-                    <h2>리뷰 사진</h2>
+                    <p className="section-eyebrow">Optional</p>
+                    <h2>추가 음식 사진</h2>
                     <p>
-                      홈페이지에 보일 음식 사진만 올리세요. 네이버 화면 전체 캡처를 여기에 넣으면
-                      홈페이지에도 캡처가 보입니다.
+                      한 장 자동 등록 후 음식 사진을 더 보여주고 싶을 때만 추가하세요.
                     </p>
                     <label>
-                      음식 사진 선택
+                      추가 음식 사진 선택
                       <input accept="image/*" multiple type="file" onChange={handlePhotoChange} />
                     </label>
                     <label>
-                      카메라로 음식 사진 촬영
+                      추가 음식 사진 촬영
                       <input
                         accept="image/*"
                         capture="environment"
@@ -652,6 +721,15 @@ export default function Admin() {
                         onChange={handleCapturePhotoChange}
                       />
                     </label>
+                    {photoPreviews.length > 0 ? (
+                      <button
+                        className="admin-secondary-button"
+                        type="button"
+                        onClick={() => setPhotoFiles([])}
+                      >
+                        표시 사진 비우기
+                      </button>
+                    ) : null}
                     <FilePreviewGrid previews={photoPreviews} />
                   </div>
 
