@@ -249,15 +249,15 @@ main {
 
 .hero-image {
   object-fit: cover;
-  object-position: center 44%;
+  object-position: center;
   filter: saturate(1.08) contrast(1.04);
 }
 
 .hero-vignette {
   background:
-    radial-gradient(circle at 63% 48%, transparent 0%, rgba(0, 0, 0, 0.16) 34%, rgba(0, 0, 0, 0.78) 78%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.76) 31%, rgba(0, 0, 0, 0.24) 67%, rgba(0, 0, 0, 0.78) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.22) 50%, #050607 100%);
+    radial-gradient(circle at 66% 48%, transparent 0%, rgba(0, 0, 0, 0.1) 38%, rgba(0, 0, 0, 0.72) 84%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.97) 0%, rgba(0, 0, 0, 0.72) 31%, rgba(0, 0, 0, 0.15) 66%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.12) 50%, #050607 100%);
 }
 
 .hero-inner {

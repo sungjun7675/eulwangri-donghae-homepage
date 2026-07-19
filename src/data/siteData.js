@@ -1,4 +1,4 @@
-import heroImage from "../assets/images/hero/hero-seafood-photo.png";
+import heroImage from "../assets/images/hero/hero-seafood-cinematic.jpg";
 import assortedShellfishImage from "../assets/images/menu/real-assorted-shellfish-optimized.jpg";
 import grilledScallopImage from "../assets/images/menu/real-grilled-scallop-optimized.jpg";
 import seafoodKalguksuImage from "../assets/images/menu/real-seafood-kalguksu-optimized.jpg";
