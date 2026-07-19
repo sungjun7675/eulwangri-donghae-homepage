@@ -1,4 +1,4 @@
-import { assets, siteInfo } from "../../data/siteData.js";
+import { assets, siteInfo, storeHighlights } from "../../data/siteData.js";
 
 export default function StoreInfoSection() {
   return (
@@ -33,6 +33,14 @@ export default function StoreInfoSection() {
             </dd>
           </div>
         </dl>
+        <div className="store-highlight-list" aria-label="매장 핵심 안내">
+          {storeHighlights.map((highlight) => (
+            <article key={highlight.label}>
+              <strong>{highlight.label}</strong>
+              <p>{highlight.description}</p>
+            </article>
+          ))}
+        </div>
       </div>
       <img
         src={assets.storeImage}

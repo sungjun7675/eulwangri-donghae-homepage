@@ -780,6 +780,114 @@ main {
   gap: 16px;
 }
 
+.menu-card-intro {
+  max-width: 720px;
+  margin: -6px 0 22px;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.menu-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.menu-detail-item {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(10, 12, 14, 0.82);
+}
+
+.menu-detail-image {
+  aspect-ratio: 1.18;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.menu-detail-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 260ms ease;
+}
+
+.menu-detail-item:hover .menu-detail-image img {
+  transform: scale(1.035);
+}
+
+.menu-detail-copy {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.menu-detail-copy span {
+  color: var(--color-gold-bright);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.menu-detail-copy h3,
+.menu-detail-copy p {
+  margin: 0;
+}
+
+.menu-detail-copy h3 {
+  color: #fff;
+  font-size: 18px;
+}
+
+.menu-detail-copy p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.menu-detail-copy small {
+  color: var(--color-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.menu-verify-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-verify-row p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.menu-verify-row a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(216, 167, 53, 0.56);
+  border-radius: 6px;
+  color: #080705;
+  font-size: 13px;
+  font-weight: 900;
+  background: var(--color-gold-bright);
+}
+
 .menu-item {
   display: grid;
   gap: 12px;
@@ -860,6 +968,40 @@ main {
 
 .store-details a {
   color: var(--color-muted);
+}
+
+.store-highlight-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.store-highlight-list article,
+.route-note-list p,
+.visit-check-grid article {
+  margin: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.store-highlight-list strong,
+.route-note-list strong,
+.visit-check-grid strong {
+  display: block;
+  color: var(--color-gold-bright);
+  font-size: 13px;
+}
+
+.store-highlight-list p,
+.route-note-list span,
+.visit-check-grid p {
+  display: block;
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .store-card img {
@@ -1030,6 +1172,12 @@ main {
   background: var(--color-gold-bright);
 }
 
+.route-note-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .reservation-section,
 .gallery-section,
 .notice-section {
@@ -1047,6 +1195,14 @@ main {
   background:
     linear-gradient(90deg, rgba(216, 167, 53, 0.1), rgba(255, 255, 255, 0.025)),
     rgba(10, 12, 14, 0.82);
+}
+
+.visit-check-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 6px;
 }
 
 .section-eyebrow {
@@ -1310,6 +1466,10 @@ main {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .menu-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .store-card {
     grid-template-columns: 1fr;
   }
@@ -1320,6 +1480,10 @@ main {
 
   .reservation-inner {
     grid-template-columns: 1fr;
+  }
+
+  .visit-check-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .reservation-actions {
@@ -1440,6 +1604,31 @@ main {
     grid-template-columns: 1fr 1fr;
   }
 
+  .menu-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-detail-item {
+    grid-template-columns: 126px minmax(0, 1fr);
+  }
+
+  .menu-detail-image {
+    min-height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .menu-detail-copy {
+    padding: 14px;
+  }
+
+  .menu-detail-copy h3 {
+    font-size: 16px;
+  }
+
+  .menu-detail-copy p {
+    font-size: 13px;
+  }
+
   .summary-card {
     padding: 18px;
   }
@@ -1449,6 +1638,11 @@ main {
   }
 
   .map-info-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .route-note-list,
+  .visit-check-grid {
     grid-template-columns: 1fr;
   }
 

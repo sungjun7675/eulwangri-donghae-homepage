@@ -6,6 +6,7 @@ export default function StructuredData() {
     "@type": "Restaurant",
     name: siteInfo.name,
     description: siteInfo.description,
+    url: siteInfo.siteUrl,
     telephone: siteInfo.phone,
     servesCuisine: ["조개구이", "회", "해산물"],
     address: {

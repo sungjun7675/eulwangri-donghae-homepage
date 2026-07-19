@@ -48,6 +48,16 @@ export default function MapSection() {
           </button>
         </div>
       </div>
+      <div className="route-note-list" aria-label="방문 전 확인 사항">
+        <p>
+          <strong>방문 전 체크</strong>
+          <span>네이버 지도에서 실시간 길찾기를 확인하고, 출발 전 영업 여부를 전화로 확인하세요.</span>
+        </p>
+        <p>
+          <strong>주소 기준</strong>
+          <span>{siteInfo.locationHint} 위치로 안내합니다.</span>
+        </p>
+      </div>
     </section>
   );
 }

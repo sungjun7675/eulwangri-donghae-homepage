@@ -66,7 +66,7 @@ export default function Home({ currentPage = "home" }) {
     return (
       <PageView page="menu">
         <div className="container subpage-card-grid">
-          <MenuSection />
+          <MenuSection variant="full" />
         </div>
         <GallerySection />
       </PageView>

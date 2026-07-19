@@ -20,6 +20,7 @@ export const siteInfo = {
   headline: "을왕리 동해\n회조개구이",
   description:
     "신선한 조개와 회를 한 번에 즐기는 최고의 맛. 을왕리의 바다를 담아 정성껏 준비합니다.",
+  siteUrl: "https://sungjun7675.github.io/eulwangri-donghae-homepage/",
   address: "인천 중구 을왕로 62",
   phone: "0507-1395-2840",
   businessHours: "일-목 10:00 - 22:00 / 금-토 10:00 - 01:00",
@@ -107,33 +108,82 @@ export const featureItems = [
   { label: "네이버 예약", description: "간편한 예약 시스템", icon: "naver" },
 ];
 
+export const storeHighlights = [
+  {
+    label: "을왕리해수욕장 인근",
+    description: "해변 방문 전후로 들르기 좋은 위치를 기준으로 안내합니다.",
+  },
+  {
+    label: "조개구이 · 회 · 식사",
+    description: "대표 해산물 메뉴와 식사 메뉴를 한 화면에서 확인할 수 있습니다.",
+  },
+  {
+    label: "방문 전 확인 권장",
+    description: "영업시간, 예약 가능 여부, 메뉴 구성은 방문 전 전화 확인이 안전합니다.",
+  },
+];
+
+export const visitChecklist = [
+  {
+    label: "영업시간",
+    description: "공개 출처별 시간이 일부 달라 방문 전 전화 확인을 권장합니다.",
+  },
+  {
+    label: "예약",
+    description: "네이버 플레이스에서 예약 가능 여부를 먼저 확인하세요.",
+  },
+  {
+    label: "단체 방문",
+    description: "모임, 회식 등 인원수가 있는 방문은 전화 문의가 가장 정확합니다.",
+  },
+  {
+    label: "메뉴 구성",
+    description: "당일 재료 상황에 따라 구성과 판매 여부가 달라질 수 있습니다.",
+  },
+];
+
 export const menuItems = [
   {
     name: "모듬조개구이",
+    category: "대표 구이",
+    description: "여러 조개를 한 번에 즐길 수 있는 대표 메뉴입니다.",
+    note: "구성 및 가격은 방문 전 확인 권장",
     image: assortedShellfishImage,
     alt: "동해회조개구이의 조개 모둠 사진",
     imagePosition: "center",
   },
   {
     name: "가리비구이",
+    category: "조개구이",
+    description: "불향과 조개 특유의 고소함을 즐기기 좋은 메뉴입니다.",
+    note: "당일 재료 상황에 따라 구성 변동 가능",
     image: grilledScallopImage,
     alt: "불판 위 가리비구이 사진",
     imagePosition: "center",
   },
   {
     name: "새우구이",
+    category: "구이 메뉴",
+    description: "구운 새우의 담백한 풍미를 조개구이와 함께 즐길 수 있습니다.",
+    note: "정확한 제공 구성은 매장 확인",
     image: shrimpShellfishImage,
     alt: "새우와 조개가 담긴 해산물 모둠 사진",
     imagePosition: "center 44%",
   },
   {
     name: "해물칼국수",
+    category: "식사 메뉴",
+    description: "해산물과 따뜻한 국물이 어울리는 식사 메뉴입니다.",
+    note: "영업일 기준 판매 여부 확인 권장",
     image: seafoodKalguksuImage,
     alt: "해물칼국수 사진",
     imagePosition: "center",
   },
   {
     name: "회무침",
+    category: "회 메뉴",
+    description: "매콤새콤한 양념과 채소를 곁들여 즐기는 메뉴입니다.",
+    note: "계절과 재료 상황에 따라 변동 가능",
     image: spicyRawFishImage,
     alt: "채소와 회가 담긴 회무침 사진",
     imagePosition: "center",

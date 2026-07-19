@@ -1,4 +1,4 @@
-import { siteInfo } from "../../data/siteData.js";
+import { siteInfo, visitChecklist } from "../../data/siteData.js";
 
 export default function ReservationSection() {
   return (
@@ -24,6 +24,14 @@ export default function ReservationSection() {
           <a className="button button-outline" href={`tel:${siteInfo.phone.replaceAll("-", "")}`}>
             전화 문의
           </a>
+        </div>
+        <div className="visit-check-grid">
+          {visitChecklist.map((item) => (
+            <article key={item.label}>
+              <strong>{item.label}</strong>
+              <p>{item.description}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
