@@ -50,6 +50,8 @@ Then open `Settings > Pages` and select `GitHub Actions` as the Pages source. Th
 https://sungjun7675.github.io/eulwangri-donghae-homepage/
 ```
 
+If the first workflow run fails at `Configure Pages`, enable the Pages source above and re-run the workflow.
+
 ## GitHub remote
 
 Target account:
