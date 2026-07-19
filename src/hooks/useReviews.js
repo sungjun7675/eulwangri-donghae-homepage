@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
 const REVIEW_LIMIT = 20;
-const REVIEW_REFRESH_INTERVAL_MS = 60000;
+const REVIEW_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export default function useReviews() {
   const [state, setState] = useState({
