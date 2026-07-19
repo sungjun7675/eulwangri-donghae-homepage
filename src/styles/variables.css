@@ -1,0 +1,18 @@
+:root {
+  --color-background: #050607;
+  --color-surface: rgba(14, 16, 18, 0.84);
+  --color-surface-strong: rgba(18, 20, 23, 0.94);
+  --color-card-border: rgba(255, 255, 255, 0.14);
+  --color-text: #f6f1e8;
+  --color-muted: rgba(246, 241, 232, 0.68);
+  --color-soft: rgba(246, 241, 232, 0.48);
+  --color-gold: #d8a735;
+  --color-gold-bright: #f0bf46;
+  --color-gold-deep: #8e6b18;
+  --color-red: #eb2638;
+  --color-green: #1fc45a;
+  --layout-max-width: 1448px;
+  --section-max-width: 1172px;
+  --header-height: 80px;
+  color-scheme: dark;
+}
