@@ -333,14 +333,14 @@ export default function Admin() {
     return uploadedUrls;
   };
 
-  const handleReadOcr = async () => {
-    if (!ocrFile) {
+  const handleReadOcr = async (selectedFile = ocrFile) => {
+    if (!selectedFile) {
       setOcrStatus("먼저 리뷰 캡처 이미지를 선택하세요.");
       return;
     }
 
     setIsReadingOcr(true);
-    setOcrStatus("OCR 엔진을 준비하는 중입니다.");
+    setOcrStatus("이미지를 선택했습니다. OCR 엔진을 준비하는 중입니다.");
 
     let worker;
 
@@ -362,13 +362,13 @@ export default function Admin() {
 
       const {
         data: { text },
-      } = await worker.recognize(ocrFile);
+      } = await worker.recognize(selectedFile);
       const cleanedText = normalizeOcrText(text);
 
       setOcrText(cleanedText || text.trim());
       setForm((current) => ({
         ...current,
-        text: current.text.trim() ? current.text : cleanedText || text.trim(),
+        text: cleanedText || text.trim(),
       }));
       setOcrStatus("OCR 읽기가 완료되었습니다. 내용을 확인하고 필요한 부분만 남기세요.");
     } catch (error) {
@@ -379,6 +379,19 @@ export default function Admin() {
       }
 
       setIsReadingOcr(false);
+    }
+  };
+
+  const handleOcrFileChange = (event) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+
+    setOcrFile(selectedFile);
+    setOcrText("");
+
+    if (selectedFile) {
+      handleReadOcr(selectedFile);
+    } else {
+      setOcrStatus("");
     }
   };
 
@@ -588,21 +601,22 @@ export default function Admin() {
                   <div className="admin-card admin-upload-card">
                     <p className="section-eyebrow">OCR</p>
                     <h2>캡처 읽기</h2>
+                    <p>리뷰 캡처나 사진을 선택하면 자동으로 글자를 읽어 리뷰 문구에 넣습니다.</p>
                     <label>
                       리뷰 캡처 이미지
                       <input
                         accept="image/*"
                         type="file"
-                        onChange={(event) => setOcrFile(event.target.files?.[0] ?? null)}
+                        onChange={handleOcrFileChange}
                       />
                     </label>
                     <button
                       className="admin-secondary-button"
                       disabled={isReadingOcr}
                       type="button"
-                      onClick={handleReadOcr}
+                      onClick={() => handleReadOcr()}
                     >
-                      {isReadingOcr ? "읽는 중" : "OCR로 리뷰 읽기"}
+                      {isReadingOcr ? "자동 입력 중" : "다시 읽기"}
                     </button>
                     {ocrStatus ? <p className="admin-status-text">{ocrStatus}</p> : null}
                     {ocrText ? (
