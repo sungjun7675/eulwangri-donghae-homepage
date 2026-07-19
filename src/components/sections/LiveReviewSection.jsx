@@ -8,6 +8,7 @@ import {
 } from "../../utils/reviewText.js";
 
 const AUTO_SCROLL_INTERVAL_MS = 3200;
+const PHOTO_PIPELINE_FIXED_AT = new Date("2026-07-19T16:45:00.000Z").getTime();
 
 const scrollByCard = (element, direction) => {
   if (!element) {
@@ -28,8 +29,27 @@ export default function LiveReviewSection() {
   const { reviews: connectedReviews, isLoading } = useReviews();
   const hasConnectedReviews = connectedReviews.length > 0;
   const reviews = hasConnectedReviews ? connectedReviews : liveReviews;
+  const reviewItems = reviews
+    .map((review) => {
+      const createdAt = new Date(review.created_at ?? 0).getTime();
+      const canShowPhotos = Number.isFinite(createdAt) && createdAt >= PHOTO_PIPELINE_FIXED_AT;
+      const imageUrls =
+        canShowPhotos && Array.isArray(review.image_urls) ? review.image_urls : [];
+      const reviewText = formatPublicReviewText(review.text);
+      const reviewAuthor = formatPublicReviewAuthor(review);
+      const reviewTime = formatPublicReviewTime(review);
+
+      return {
+        imageUrls,
+        review,
+        reviewAuthor,
+        reviewText,
+        reviewTime,
+      };
+    })
+    .filter(({ reviewAuthor, reviewText }) => reviewText && reviewAuthor !== "작성자 확인");
   const shouldAutoScroll =
-    reviews.length > 1 && isAutoScrollEnabled && !isInteractionPaused && !prefersReducedMotion;
+    reviewItems.length > 1 && isAutoScrollEnabled && !isInteractionPaused && !prefersReducedMotion;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -71,7 +91,7 @@ export default function LiveReviewSection() {
     return () => {
       window.clearInterval(autoScrollTimer);
     };
-  }, [reviews.length, shouldAutoScroll]);
+  }, [reviewItems.length, shouldAutoScroll]);
 
   return (
     <section className="live-review-section" id="reviews" aria-labelledby="live-review-title">
@@ -127,12 +147,7 @@ export default function LiveReviewSection() {
               role="region"
               aria-label="방문자 리뷰 슬라이더"
             >
-              {reviews.map((review) => {
-                const imageUrls = Array.isArray(review.image_urls) ? review.image_urls : [];
-                const reviewText = formatPublicReviewText(review.text);
-                const reviewAuthor = formatPublicReviewAuthor(review);
-                const reviewTime = formatPublicReviewTime(review);
-
+              {reviewItems.map(({ imageUrls, review, reviewAuthor, reviewText, reviewTime }) => {
                 return (
                   <article className="review-card" key={review.id}>
                     <div

@@ -98,9 +98,18 @@ const extractAuthor = (value) => {
     .map(cleanAuthorCandidate)
     .filter((line) => {
       const hangulCount = (line.match(/[가-힣]/g) ?? []).length;
+      const latinCount = (line.match(/[A-Za-z]/g) ?? []).length;
       const digitCount = (line.match(/\d/g) ?? []).length;
+      const hasUppercaseNoise = /[A-Z]{3,}/.test(line) && hangulCount > 0;
 
-      return hangulCount >= 2 && line.length >= 3 && line.length <= 18 && digitCount <= 6;
+      return (
+        hangulCount >= 2 &&
+        line.length >= 3 &&
+        line.length <= 18 &&
+        latinCount <= Math.max(4, hangulCount) &&
+        digitCount <= 6 &&
+        !hasUppercaseNoise
+      );
     });
 
   return candidates[0] ?? "";

@@ -5,6 +5,7 @@ import { extractReviewMetadata, maskReviewAuthor } from "../utils/reviewText.js"
 
 const REVIEW_PHOTO_BUCKET = "review-photos";
 const DEFAULT_ADMIN_EMAIL = "tjdrhkde@gmail.com";
+const MAX_REVIEW_PHOTOS = 8;
 
 const makeStarLabel = (rating) => `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`;
 
@@ -22,52 +23,380 @@ const canvasToBlob = (canvas, type = "image/jpeg", quality = 0.88) =>
     canvas.toBlob((blob) => resolve(blob), type, quality);
   });
 
-const createDisplayPhotoFromReviewImage = async (file) => {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const isTallScreenshot = bitmap.height / bitmap.width > 1.35;
-    const sourceWidth = bitmap.width;
-    const sourceHeight = bitmap.height;
-    const crop = isTallScreenshot
-      ? {
-          x: Math.round(sourceWidth * 0.04),
-          y: Math.round(sourceHeight * 0.35),
-          width: Math.round(sourceWidth * 0.92),
-          height: Math.round(Math.min(sourceHeight * 0.29, sourceWidth * 0.68)),
-        }
-      : {
-          x: 0,
-          y: 0,
-          width: sourceWidth,
-          height: sourceHeight,
-        };
-    const canvas = document.createElement("canvas");
-    canvas.width = crop.width;
-    canvas.height = crop.height;
-    const context = canvas.getContext("2d");
+const createCroppedImageFile = async (bitmap, crop, namePrefix, type = "image/jpeg", quality = 0.88) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = crop.width;
+  canvas.height = crop.height;
+  const context = canvas.getContext("2d");
 
-    context.drawImage(
-      bitmap,
-      crop.x,
-      crop.y,
-      crop.width,
-      crop.height,
-      0,
-      0,
-      crop.width,
-      crop.height,
-    );
+  context.drawImage(
+    bitmap,
+    crop.x,
+    crop.y,
+    crop.width,
+    crop.height,
+    0,
+    0,
+    crop.width,
+    crop.height,
+  );
 
-    const blob = await canvasToBlob(canvas);
-    bitmap.close();
+  const blob = await canvasToBlob(canvas, type, quality);
 
-    if (!blob) {
-      return file;
+  if (!blob) {
+    return null;
+  }
+
+  const extension = type === "image/png" ? "png" : "jpg";
+
+  return new File([blob], `${namePrefix}-${Date.now()}.${extension}`, { type });
+};
+
+const getPixelSignal = (data, index) => {
+  const red = data[index];
+  const green = data[index + 1];
+  const blue = data[index + 2];
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const saturation = max === 0 ? 0 : (max - min) / max;
+  const brightness = (red + green + blue) / 3;
+  const isWhite = brightness > 238 && saturation < 0.16;
+  const isLightUi = brightness > 190 && saturation < 0.28;
+  const isGrayText = brightness < 120 && max - min < 42;
+  const isDark = brightness < 62;
+
+  return {
+    isPhotoLike: !isLightUi && !isGrayText && brightness > 36 && brightness < 244 && saturation > 0.12,
+    isWhite,
+    isLightUi,
+    isGrayText,
+    isDark,
+  };
+};
+
+const analyzeImageSignal = (bitmap) => {
+  const sampleWidth = 240;
+  const sampleHeight = Math.max(1, Math.round((bitmap.height / bitmap.width) * sampleWidth));
+  const canvas = document.createElement("canvas");
+  canvas.width = sampleWidth;
+  canvas.height = sampleHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  context.drawImage(bitmap, 0, 0, sampleWidth, sampleHeight);
+
+  const { data } = context.getImageData(0, 0, sampleWidth, sampleHeight);
+  let whitePixels = 0;
+  let lightUiPixels = 0;
+  let grayTextPixels = 0;
+  let photoLikePixels = 0;
+  let darkPixels = 0;
+  const rowSignals = [];
+  const contentBounds = {
+    minX: sampleWidth,
+    minY: sampleHeight,
+    maxX: 0,
+    maxY: 0,
+  };
+
+  for (let y = 0; y < sampleHeight; y += 1) {
+    let rowPhotoPixels = 0;
+
+    for (let x = 0; x < sampleWidth; x += 1) {
+      const signal = getPixelSignal(data, (y * sampleWidth + x) * 4);
+
+      if (signal.isWhite) {
+        whitePixels += 1;
+      }
+
+      if (signal.isLightUi) {
+        lightUiPixels += 1;
+      }
+
+      if (signal.isGrayText) {
+        grayTextPixels += 1;
+      }
+
+      if (signal.isDark) {
+        darkPixels += 1;
+      }
+
+      if (signal.isLightUi || signal.isGrayText) {
+        contentBounds.minX = Math.min(contentBounds.minX, x);
+        contentBounds.minY = Math.min(contentBounds.minY, y);
+        contentBounds.maxX = Math.max(contentBounds.maxX, x);
+        contentBounds.maxY = Math.max(contentBounds.maxY, y);
+      }
+
+      if (signal.isPhotoLike) {
+        photoLikePixels += 1;
+        rowPhotoPixels += 1;
+      }
     }
 
-    return new File([blob], `review-photo-${Date.now()}.jpg`, { type: "image/jpeg" });
+    rowSignals.push(rowPhotoPixels / sampleWidth);
+  }
+
+  const totalPixels = sampleWidth * sampleHeight;
+
+  return {
+    sampleWidth,
+    sampleHeight,
+    rowSignals,
+    whiteRatio: whitePixels / totalPixels,
+    lightUiRatio: lightUiPixels / totalPixels,
+    grayTextRatio: grayTextPixels / totalPixels,
+    photoLikeRatio: photoLikePixels / totalPixels,
+    darkRatio: darkPixels / totalPixels,
+    contentBounds: contentBounds.minX <= contentBounds.maxX ? contentBounds : null,
+  };
+};
+
+const isLikelyReviewCapture = (bitmap, signal) => {
+  const aspectRatio = bitmap.height / bitmap.width;
+  const hasReadableUi = signal.grayTextRatio > 0.004 && signal.lightUiRatio > 0.16;
+  const hasPhoneScreenShape = aspectRatio > 1.12;
+  const isCameraShotOfScreen = signal.darkRatio > 0.08 && signal.lightUiRatio > 0.2;
+
+  return hasPhoneScreenShape && hasReadableUi && (signal.whiteRatio > 0.08 || isCameraShotOfScreen);
+};
+
+const getScaledContentCrop = (bitmap, signal) => {
+  if (!signal.contentBounds) {
+    return { x: 0, y: 0, width: bitmap.width, height: bitmap.height };
+  }
+
+  const scaleX = bitmap.width / signal.sampleWidth;
+  const scaleY = bitmap.height / signal.sampleHeight;
+  const paddingX = Math.round(bitmap.width * 0.02);
+  const paddingY = Math.round(bitmap.height * 0.02);
+  const x = Math.max(0, Math.round(signal.contentBounds.minX * scaleX) - paddingX);
+  const y = Math.max(0, Math.round(signal.contentBounds.minY * scaleY) - paddingY);
+  const right = Math.min(bitmap.width, Math.round((signal.contentBounds.maxX + 1) * scaleX) + paddingX);
+  const bottom = Math.min(bitmap.height, Math.round((signal.contentBounds.maxY + 1) * scaleY) + paddingY);
+  const width = right - x;
+  const height = bottom - y;
+
+  if (width < bitmap.width * 0.45 || height < bitmap.height * 0.35) {
+    return { x: 0, y: 0, width: bitmap.width, height: bitmap.height };
+  }
+
+  return { x, y, width, height };
+};
+
+const createOcrReadyFile = async (bitmap, signal) => {
+  const crop = getScaledContentCrop(bitmap, signal);
+  const targetWidth = Math.min(1800, Math.max(1000, crop.width));
+  const targetHeight = Math.round((crop.height / crop.width) * targetWidth);
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  context.drawImage(
+    bitmap,
+    crop.x,
+    crop.y,
+    crop.width,
+    crop.height,
+    0,
+    0,
+    targetWidth,
+    targetHeight,
+  );
+
+  const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
+  const { data } = imageData;
+
+  for (let index = 0; index < data.length; index += 4) {
+    const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+    const contrasted = Math.max(0, Math.min(255, (gray - 128) * 1.35 + 138));
+    data[index] = contrasted;
+    data[index + 1] = contrasted;
+    data[index + 2] = contrasted;
+  }
+
+  context.putImageData(imageData, 0, 0);
+
+  const blob = await canvasToBlob(canvas, "image/png");
+
+  if (!blob) {
+    return null;
+  }
+
+  return new File([blob], `review-ocr-${Date.now()}.png`, { type: "image/png" });
+};
+
+const createDisplayPhotoFile = async (bitmap) => {
+  const maxSide = 1280;
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  context.drawImage(bitmap, 0, 0, width, height);
+
+  const blob = await canvasToBlob(canvas, "image/jpeg", 0.86);
+
+  if (!blob) {
+    return null;
+  }
+
+  return new File([blob], `review-photo-${Date.now()}.jpg`, { type: "image/jpeg" });
+};
+
+const findPhotoBands = ({ rowSignals, sampleHeight }) => {
+  const bands = [];
+  let start = null;
+
+  rowSignals.forEach((signal, index) => {
+    const isPhotoRow = signal > 0.1;
+
+    if (isPhotoRow && start === null) {
+      start = index;
+    }
+
+    if ((!isPhotoRow || index === rowSignals.length - 1) && start !== null) {
+      const end = isPhotoRow && index === rowSignals.length - 1 ? index : index - 1;
+      const height = end - start + 1;
+
+      if (height > sampleHeight * 0.055) {
+        bands.push({ start, end });
+      }
+
+      start = null;
+    }
+  });
+
+  return bands;
+};
+
+const splitPhotoBandIntoColumns = (bitmap, band, signal) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = signal.sampleWidth;
+  canvas.height = signal.sampleHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  context.drawImage(bitmap, 0, 0, signal.sampleWidth, signal.sampleHeight);
+
+  const { data } = context.getImageData(0, 0, signal.sampleWidth, signal.sampleHeight);
+  const columnSignals = [];
+
+  for (let x = 0; x < signal.sampleWidth; x += 1) {
+    let columnPhotoPixels = 0;
+
+    for (let y = band.start; y <= band.end; y += 1) {
+      if (getPixelSignal(data, (y * signal.sampleWidth + x) * 4).isPhotoLike) {
+        columnPhotoPixels += 1;
+      }
+    }
+
+    columnSignals.push(columnPhotoPixels / (band.end - band.start + 1));
+  }
+
+  const columns = [];
+  let start = null;
+
+  columnSignals.forEach((value, index) => {
+    const isPhotoColumn = value > 0.09;
+
+    if (isPhotoColumn && start === null) {
+      start = index;
+    }
+
+    if ((!isPhotoColumn || index === columnSignals.length - 1) && start !== null) {
+      const end = isPhotoColumn && index === columnSignals.length - 1 ? index : index - 1;
+
+      if (end - start + 1 > signal.sampleWidth * 0.18) {
+        columns.push({ start, end });
+      }
+
+      start = null;
+    }
+  });
+
+  return columns.length > 0 ? columns : [{ start: 0, end: signal.sampleWidth - 1 }];
+};
+
+const extractPhotoCandidatesFromCapture = async (bitmap, signal) => {
+  const bands = findPhotoBands(signal)
+    .filter((band) => band.start > signal.sampleHeight * 0.18)
+    .filter((band) => band.end - band.start > signal.sampleHeight * 0.06)
+    .sort((first, second) => second.end - second.start - (first.end - first.start))
+    .slice(0, 3);
+  const candidates = [];
+
+  for (const band of bands) {
+    const columns = splitPhotoBandIntoColumns(bitmap, band, signal).slice(0, 4);
+
+    for (const column of columns) {
+      const scaleX = bitmap.width / signal.sampleWidth;
+      const scaleY = bitmap.height / signal.sampleHeight;
+      const padding = 4;
+      const cropX = Math.max(0, Math.round((column.start - padding) * scaleX));
+      const cropY = Math.max(0, Math.round((band.start - padding) * scaleY));
+      const cropRight = Math.min(bitmap.width, Math.round((column.end + padding + 1) * scaleX));
+      const cropBottom = Math.min(bitmap.height, Math.round((band.end + padding + 1) * scaleY));
+      const crop = {
+        x: cropX,
+        y: cropY,
+        width: cropRight - cropX,
+        height: cropBottom - cropY,
+      };
+
+      if (crop.width < bitmap.width * 0.24 || crop.height < bitmap.height * 0.045) {
+        continue;
+      }
+
+      const candidate = await createCroppedImageFile(bitmap, crop, "review-photo");
+
+      if (candidate) {
+        candidates.push(candidate);
+      }
+    }
+  }
+
+  return candidates;
+};
+
+const analyzeReviewUpload = async (file) => {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const signal = analyzeImageSignal(bitmap);
+    const isReviewCapture = isLikelyReviewCapture(bitmap, signal);
+
+    if (!isReviewCapture) {
+      const displayPhoto = await createDisplayPhotoFile(bitmap);
+      bitmap.close();
+      return {
+        fileName: file.name,
+        kind: "photo",
+        ocrFile: null,
+        photoFiles: displayPhoto ? [displayPhoto] : [],
+      };
+    }
+
+    const [ocrFile, photoFiles] = await Promise.all([
+      createOcrReadyFile(bitmap, signal),
+      extractPhotoCandidatesFromCapture(bitmap, signal),
+    ]);
+
+    bitmap.close();
+    return {
+      fileName: file.name,
+      kind: photoFiles.length > 0 ? "capture-with-photos" : "text-capture",
+      ocrFile,
+      photoFiles,
+    };
   } catch {
-    return file;
+    return {
+      fileName: file.name,
+      kind: "unsupported",
+      ocrFile: null,
+      photoFiles: [],
+    };
   }
 };
 
@@ -98,17 +427,20 @@ const getUploadPath = (userId, file, index) => {
   return `${userId}/${Date.now()}-${index}-${randomId}.${getSafeImageExtension(file)}`;
 };
 
-function FilePreviewGrid({ previews }) {
+function FilePreviewGrid({ previews, onRemove }) {
   if (previews.length === 0) {
     return null;
   }
 
   return (
     <div className="admin-photo-preview-grid" aria-label="선택한 리뷰 사진 미리보기">
-      {previews.map((preview) => (
+      {previews.map((preview, index) => (
         <figure key={preview.url}>
           <img src={preview.url} alt={`${preview.name} 미리보기`} />
           <figcaption>{preview.name}</figcaption>
+          <button type="button" onClick={() => onRemove(index)}>
+            제외
+          </button>
         </figure>
       ))}
     </div>
@@ -166,7 +498,7 @@ export default function Admin() {
     error: "",
   });
   const [form, setForm] = useState(getInitialForm);
-  const [ocrFile, setOcrFile] = useState(null);
+  const [ocrFiles, setOcrFiles] = useState([]);
   const [ocrText, setOcrText] = useState("");
   const [ocrStatus, setOcrStatus] = useState("");
   const [isReadingOcr, setIsReadingOcr] = useState(false);
@@ -314,41 +646,47 @@ export default function Admin() {
     }));
   };
 
-  const handlePhotoChange = (event) => {
+  const handleUnifiedReviewImageChange = async (event) => {
     const selectedFiles = Array.from(event.target.files ?? []).filter((file) =>
       file.type.startsWith("image/"),
     );
 
-    setPhotoFiles((current) => [...current, ...selectedFiles]);
-    event.target.value = "";
-  };
-
-  const handleUnifiedReviewImageChange = async (event) => {
-    const selectedFile = event.target.files?.[0] ?? null;
-
-    if (!selectedFile || !selectedFile.type.startsWith("image/")) {
+    if (selectedFiles.length === 0) {
       return;
     }
 
-    setOcrFile(selectedFile);
     setOcrText("");
-    setSubmitStatus("업로드한 이미지에서 리뷰 내용과 표시 사진을 준비하는 중입니다.");
-    handleReadOcr(selectedFile);
+    setSubmitStatus(`${selectedFiles.length}개 이미지에서 리뷰와 사진 후보를 분석하는 중입니다.`);
 
-    const displayPhoto = await createDisplayPhotoFromReviewImage(selectedFile);
-    setPhotoFiles([displayPhoto]);
+    const uploadResults = await Promise.all(selectedFiles.map(analyzeReviewUpload));
+    const nextOcrFiles = uploadResults.flatMap((result) => (result.ocrFile ? [result.ocrFile] : []));
+    const nextPhotoFiles = uploadResults.flatMap((result) => result.photoFiles).slice(0, MAX_REVIEW_PHOTOS);
+    const captureCount = uploadResults.filter((result) => result.kind !== "photo").length;
+    const textOnlyCount = uploadResults.filter((result) => result.kind === "text-capture").length;
+
+    setOcrFiles(nextOcrFiles);
+    setPhotoFiles((current) => [...current, ...nextPhotoFiles].slice(0, MAX_REVIEW_PHOTOS));
+
+    if (nextOcrFiles.length > 0) {
+      handleReadOcr(nextOcrFiles);
+    } else {
+      setOcrStatus("리뷰 화면으로 보이는 이미지를 찾지 못했습니다. 실제 음식 사진만 선택한 경우 리뷰 문구는 직접 입력하세요.");
+    }
+
+    setSubmitStatus(
+      nextPhotoFiles.length > 0
+        ? `${nextPhotoFiles.length}개 사진 후보를 찾았습니다. 필요 없는 사진은 제외하세요.`
+        : textOnlyCount > 0
+          ? "글만 있는 리뷰 캡처로 판단했습니다. 사진 없이 저장됩니다."
+          : captureCount > 0
+            ? "리뷰 화면은 읽었지만 음식 사진 후보는 찾지 못했습니다."
+            : "표시 사진 후보가 없습니다.",
+    );
     event.target.value = "";
   };
 
-  const handleCapturePhotoChange = (event) => {
-    const selectedFile = event.target.files?.[0];
-
-    if (!selectedFile || !selectedFile.type.startsWith("image/")) {
-      return;
-    }
-
-    setPhotoFiles((current) => [...current, selectedFile]);
-    event.target.value = "";
+  const handleRemovePhoto = (indexToRemove) => {
+    setPhotoFiles((current) => current.filter((_file, index) => index !== indexToRemove));
   };
 
   const uploadReviewPhotos = async () => {
@@ -380,14 +718,18 @@ export default function Admin() {
     return uploadedUrls;
   };
 
-  const handleReadOcr = async (selectedFile = ocrFile) => {
-    if (!selectedFile) {
+  const handleReadOcr = async (selectedInput = ocrFiles) => {
+    const selectedFiles = Array.isArray(selectedInput)
+      ? selectedInput.filter(Boolean)
+      : [selectedInput].filter(Boolean);
+
+    if (selectedFiles.length === 0) {
       setOcrStatus("먼저 리뷰 캡처 이미지를 선택하세요.");
       return;
     }
 
     setIsReadingOcr(true);
-    setOcrStatus("이미지를 선택했습니다. OCR 엔진을 준비하는 중입니다.");
+    setOcrStatus(`${selectedFiles.length}개 이미지 OCR 엔진을 준비하는 중입니다.`);
 
     let worker;
 
@@ -407,12 +749,21 @@ export default function Admin() {
         },
       });
 
-      const {
-        data: { text },
-      } = await worker.recognize(selectedFile);
-      const extractedReview = extractReviewMetadata(text);
+      const recognizedTexts = [];
+
+      for (const [index, file] of selectedFiles.entries()) {
+        setOcrStatus(`${index + 1}/${selectedFiles.length} 이미지 글자를 읽는 중입니다.`);
+        const {
+          data: { text },
+        } = await worker.recognize(file);
+
+        recognizedTexts.push(text);
+      }
+
+      const rawText = recognizedTexts.join("\n");
+      const extractedReview = extractReviewMetadata(rawText);
       const cleanedText = extractedReview.text;
-      const fallbackText = text.trim().slice(0, 900);
+      const fallbackText = rawText.trim().slice(0, 900);
       const nextText = cleanedText;
 
       setOcrText(nextText || fallbackText);
@@ -448,7 +799,7 @@ export default function Admin() {
 
   const resetForm = () => {
     setForm(getInitialForm());
-    setOcrFile(null);
+    setOcrFiles([]);
     setOcrText("");
     setOcrStatus("");
     setPhotoFiles([]);
@@ -660,21 +1011,22 @@ export default function Admin() {
 
                   <div className="admin-card admin-upload-card">
                     <p className="section-eyebrow">One Shot</p>
-                    <h2>사진 한 장으로 자동 등록</h2>
+                    <h2>리뷰 자료 한 번에 업로드</h2>
                     <p>
-                      네이버 리뷰 캡처나 리뷰 사진을 한 장 올리면 작성자, 날짜, 별점, 본문을 읽고
-                      홈페이지 표시 사진까지 자동 준비합니다.
+                      리뷰 캡처와 음식 사진을 여러 장 한 번에 선택하세요. 앱이 글자와 사진 후보를
+                      자동으로 분리합니다.
                     </p>
                     <label>
-                      앨범/캡처에서 한 장 선택
+                      캡처/사진 여러 장 선택
                       <input
                         accept="image/*"
+                        multiple
                         type="file"
                         onChange={handleUnifiedReviewImageChange}
                       />
                     </label>
                     <label>
-                      카메라로 한 장 촬영
+                      카메라로 촬영해서 추가
                       <input
                         accept="image/*"
                         capture="environment"
@@ -691,6 +1043,23 @@ export default function Admin() {
                       {isReadingOcr ? "자동 입력 중" : "다시 읽기"}
                     </button>
                     {ocrStatus ? <p className="admin-status-text">{ocrStatus}</p> : null}
+                    <div className="admin-photo-candidates">
+                      <strong>홈페이지 표시 사진 후보</strong>
+                      {photoPreviews.length > 0 ? (
+                        <>
+                          <FilePreviewGrid previews={photoPreviews} onRemove={handleRemovePhoto} />
+                          <button
+                            className="admin-secondary-button"
+                            type="button"
+                            onClick={() => setPhotoFiles([])}
+                          >
+                            사진 후보 전체 비우기
+                          </button>
+                        </>
+                      ) : (
+                        <p>사진 후보가 없으면 글만 있는 리뷰로 저장됩니다.</p>
+                      )}
+                    </div>
                     {ocrText ? (
                       <div className="admin-ocr-result">
                         <strong>OCR 결과</strong>
@@ -700,37 +1069,6 @@ export default function Admin() {
                         </button>
                       </div>
                     ) : null}
-                  </div>
-
-                  <div className="admin-card admin-upload-card">
-                    <p className="section-eyebrow">Optional</p>
-                    <h2>추가 음식 사진</h2>
-                    <p>
-                      한 장 자동 등록 후 음식 사진을 더 보여주고 싶을 때만 추가하세요.
-                    </p>
-                    <label>
-                      추가 음식 사진 선택
-                      <input accept="image/*" multiple type="file" onChange={handlePhotoChange} />
-                    </label>
-                    <label>
-                      추가 음식 사진 촬영
-                      <input
-                        accept="image/*"
-                        capture="environment"
-                        type="file"
-                        onChange={handleCapturePhotoChange}
-                      />
-                    </label>
-                    {photoPreviews.length > 0 ? (
-                      <button
-                        className="admin-secondary-button"
-                        type="button"
-                        onClick={() => setPhotoFiles([])}
-                      >
-                        표시 사진 비우기
-                      </button>
-                    ) : null}
-                    <FilePreviewGrid previews={photoPreviews} />
                   </div>
 
                   <div className="admin-card admin-submit-card">
