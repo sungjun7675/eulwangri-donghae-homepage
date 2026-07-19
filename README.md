@@ -24,6 +24,13 @@ The optional review table SQL is prepared at:
 
 ```text
 supabase/migrations/20260719123000_create_homepage_reviews.sql
+supabase/migrations/20260719130500_add_review_source_fields.sql
+```
+
+Review registration rules and SQL examples are documented at:
+
+```text
+docs/review-operations.md
 ```
 
 ## GitHub remote

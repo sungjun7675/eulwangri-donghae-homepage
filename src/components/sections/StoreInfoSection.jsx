@@ -34,7 +34,12 @@ export default function StoreInfoSection() {
           </div>
         </dl>
       </div>
-      <img src={assets.storeImage} alt="바닷가 근처의 야간 해산물 식당 외관 시안 이미지" />
+      <img
+        src={assets.storeImage}
+        alt="바닷가 근처의 야간 해산물 식당 외관 시안 이미지"
+        loading="lazy"
+        decoding="async"
+      />
     </section>
   );
 }

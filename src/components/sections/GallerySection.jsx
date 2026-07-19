@@ -15,6 +15,8 @@ export default function GallerySection() {
               key={item.name}
               src={item.image}
               alt={item.alt}
+              loading="lazy"
+              decoding="async"
               style={{ objectPosition: item.imagePosition }}
             />
           ))}

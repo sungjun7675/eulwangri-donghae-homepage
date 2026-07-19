@@ -7,7 +7,13 @@ export default function HeroSection() {
 
   return (
     <section className="hero-section" id="home" aria-labelledby="hero-title">
-      <img className="hero-image" src={assets.heroImage} alt="" aria-hidden="true" />
+      <img
+        className="hero-image"
+        src={assets.heroImage}
+        alt=""
+        aria-hidden="true"
+        fetchPriority="high"
+      />
       <div className="hero-vignette" aria-hidden="true" />
 
       <div className="container hero-inner">

@@ -14,6 +14,8 @@ export default function MenuSection() {
               <img
                 src={item.image}
                 alt={item.alt}
+                loading="lazy"
+                decoding="async"
                 style={{ objectPosition: item.imagePosition }}
               />
             </div>

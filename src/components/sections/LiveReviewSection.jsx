@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { liveReviews, siteInfo } from "../../data/siteData.js";
 import useReviews from "../../hooks/useReviews.js";
 
@@ -17,10 +17,28 @@ const scrollByCard = (element, direction) => {
 
 export default function LiveReviewSection() {
   const reviewListRef = useRef(null);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+  const [isInteractionPaused, setIsInteractionPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const { reviews: connectedReviews, isLoading } = useReviews();
   const hasConnectedReviews = connectedReviews.length > 0;
   const reviews = hasConnectedReviews ? connectedReviews : liveReviews;
-  const shouldAutoScroll = reviews.length > 1;
+  const shouldAutoScroll =
+    reviews.length > 1 && isAutoScrollEnabled && !isInteractionPaused && !prefersReducedMotion;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleMotionPreferenceChange = () => {
+      setPrefersReducedMotion(mediaQuery.matches);
+    };
+
+    handleMotionPreferenceChange();
+    mediaQuery.addEventListener("change", handleMotionPreferenceChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMotionPreferenceChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!shouldAutoScroll) {
@@ -67,12 +85,28 @@ export default function LiveReviewSection() {
                     : "공식 리뷰 연동 전까지 실제 후기처럼 표시하지 않습니다."}
               </p>
             </div>
-            <a href={siteInfo.naverPlaceUrl} target="_blank" rel="noreferrer">
-              네이버에서 확인
-            </a>
+            <div className="review-panel-actions">
+              <button
+                className="review-auto-toggle"
+                type="button"
+                aria-pressed={!isAutoScrollEnabled}
+                onClick={() => setIsAutoScrollEnabled((current) => !current)}
+              >
+                {isAutoScrollEnabled && !prefersReducedMotion ? "정지" : "재생"}
+              </button>
+              <a href={siteInfo.naverPlaceUrl} target="_blank" rel="noreferrer">
+                네이버에서 확인
+              </a>
+            </div>
           </div>
 
-          <div className="review-carousel-wrap">
+          <div
+            className="review-carousel-wrap"
+            onMouseEnter={() => setIsInteractionPaused(true)}
+            onMouseLeave={() => setIsInteractionPaused(false)}
+            onFocus={() => setIsInteractionPaused(true)}
+            onBlur={() => setIsInteractionPaused(false)}
+          >
             <button
               className="carousel-button carousel-button-prev"
               type="button"
@@ -81,7 +115,13 @@ export default function LiveReviewSection() {
             >
               ‹
             </button>
-            <div className="review-carousel" ref={reviewListRef} tabIndex="0">
+            <div
+              className="review-carousel"
+              ref={reviewListRef}
+              tabIndex="0"
+              role="region"
+              aria-label="방문자 리뷰 슬라이더"
+            >
               {reviews.map((review) => (
                 <article className="review-card" key={review.id}>
                   <div className="review-stars" aria-label={review.label ?? `별점 ${review.rating ?? 5}점`}>

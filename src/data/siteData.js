@@ -27,6 +27,8 @@ export const siteInfo = {
   naverPlaceUrl: "https://map.naver.com/p/entry/place/37700467",
   directionsUrl: "https://map.naver.com/p/entry/place/37700467",
   locationHint: "을왕리해수욕장 인근",
+  latitude: 37.4492414,
+  longitude: 126.37128,
   bookingUrl: "",
   sourceNote: "공개 출처 기반 실제 사진 및 매장 정보 반영",
 };
