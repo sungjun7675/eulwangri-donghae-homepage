@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import { navigationItems } from "./data/siteData.js";
+import Admin from "./pages/Admin.jsx";
 import Home from "./pages/Home.jsx";
 
-const availablePages = new Set(navigationItems.map((item) => item.id));
+const availablePages = new Set([...navigationItems.map((item) => item.id), "admin"]);
 
 function getCurrentPageFromHash() {
   const page = window.location.hash.replace("#", "") || "home";
@@ -30,7 +31,7 @@ export default function App() {
 
   return (
     <MainLayout currentPage={currentPage}>
-      <Home currentPage={currentPage} />
+      {currentPage === "admin" ? <Admin /> : <Home currentPage={currentPage} />}
     </MainLayout>
   );
 }

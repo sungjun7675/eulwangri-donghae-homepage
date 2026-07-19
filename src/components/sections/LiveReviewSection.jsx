@@ -122,18 +122,32 @@ export default function LiveReviewSection() {
               role="region"
               aria-label="방문자 리뷰 슬라이더"
             >
-              {reviews.map((review) => (
-                <article className="review-card" key={review.id}>
-                  <div className="review-stars" aria-label={review.label ?? `별점 ${review.rating ?? 5}점`}>
-                    {review.label ?? "★★★★★"}
-                  </div>
-                  <p>{review.text}</p>
-                  <footer>
-                    <strong>{review.author}</strong>
-                    <span>{review.time ?? "최근 리뷰"}</span>
-                  </footer>
-                </article>
-              ))}
+              {reviews.map((review) => {
+                const imageUrls = Array.isArray(review.image_urls) ? review.image_urls : [];
+
+                return (
+                  <article className="review-card" key={review.id}>
+                    <div
+                      className="review-stars"
+                      aria-label={review.label ?? `별점 ${review.rating ?? 5}점`}
+                    >
+                      {review.label ?? "★★★★★"}
+                    </div>
+                    <p>{review.text}</p>
+                    {imageUrls.length > 0 ? (
+                      <div className="review-photo-row" aria-label="리뷰 사진">
+                        {imageUrls.slice(0, 3).map((url) => (
+                          <img key={url} src={url} alt={`${review.author} 리뷰 사진`} loading="lazy" />
+                        ))}
+                      </div>
+                    ) : null}
+                    <footer>
+                      <strong>{review.author}</strong>
+                      <span>{review.time ?? "최근 리뷰"}</span>
+                    </footer>
+                  </article>
+                );
+              })}
             </div>
             <button
               className="carousel-button carousel-button-next"

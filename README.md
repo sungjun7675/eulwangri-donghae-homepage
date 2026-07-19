@@ -25,6 +25,7 @@ The optional review table SQL is prepared at:
 ```text
 supabase/migrations/20260719123000_create_homepage_reviews.sql
 supabase/migrations/20260719130500_add_review_source_fields.sql
+supabase/migrations/20260720001000_add_admin_reviews_and_photos.sql
 ```
 
 Review registration rules and SQL examples are documented at:
@@ -32,6 +33,16 @@ Review registration rules and SQL examples are documented at:
 ```text
 docs/review-operations.md
 ```
+
+## Review admin app
+
+The hidden mobile admin app is available after deployment at:
+
+```text
+https://sungjun7675.github.io/eulwangri-donghae-homepage/#admin
+```
+
+It uses Supabase Auth, RLS, and the public `review-photos` storage bucket created by the admin migration. Keep using only the browser-safe anon key in GitHub secrets.
 
 ## GitHub Pages deployment
 

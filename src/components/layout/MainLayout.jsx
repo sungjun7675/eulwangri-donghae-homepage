@@ -5,14 +5,16 @@ import StructuredData from "../common/StructuredData.jsx";
 import TopButton from "../common/TopButton.jsx";
 
 export default function MainLayout({ children, currentPage }) {
+  const isAdminPage = currentPage === "admin";
+
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${isAdminPage ? "site-shell-admin" : ""}`}>
       <StructuredData />
       <Header currentPage={currentPage} />
-      <main>{children}</main>
+      <main className={isAdminPage ? "admin-main" : undefined}>{children}</main>
       <Footer />
-      <MobileActionBar />
-      <TopButton />
+      {!isAdminPage ? <MobileActionBar /> : null}
+      {!isAdminPage ? <TopButton /> : null}
     </div>
   );
 }

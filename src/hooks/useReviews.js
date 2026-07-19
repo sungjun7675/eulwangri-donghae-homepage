@@ -26,7 +26,7 @@ export default function useReviews() {
 
       const { data, error } = await supabase
         .from("homepage_reviews")
-        .select("id, author, label, text, time, rating, created_at")
+        .select("*")
         .eq("is_published", true)
         .order("created_at", { ascending: false })
         .limit(REVIEW_LIMIT);
