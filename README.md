@@ -33,6 +33,23 @@ Review registration rules and SQL examples are documented at:
 docs/review-operations.md
 ```
 
+## GitHub Pages deployment
+
+The repository includes `.github/workflows/deploy-pages.yml`.
+
+In GitHub, set repository secrets before production deployment:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Then open `Settings > Pages` and select `GitHub Actions` as the Pages source. The site URL will be:
+
+```text
+https://sungjun7675.github.io/eulwangri-donghae-homepage/
+```
+
 ## GitHub remote
 
 Target account:
