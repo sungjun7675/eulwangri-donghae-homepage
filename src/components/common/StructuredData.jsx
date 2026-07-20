@@ -9,6 +9,7 @@ export default function StructuredData() {
     url: siteInfo.siteUrl,
     telephone: siteInfo.phone,
     servesCuisine: ["조개구이", "회", "해산물"],
+    priceRange: "방문 전 확인",
     address: {
       "@type": "PostalAddress",
       streetAddress: "을왕로 62",
@@ -16,11 +17,26 @@ export default function StructuredData() {
       addressRegion: "인천",
       addressCountry: "KR",
     },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Sunday"],
+        opens: "10:00",
+        closes: "22:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Friday", "Saturday"],
+        opens: "10:00",
+        closes: "01:00",
+      },
+    ],
     geo: {
       "@type": "GeoCoordinates",
       latitude: siteInfo.latitude,
       longitude: siteInfo.longitude,
     },
+    hasMap: siteInfo.directionsUrl,
     sameAs: [siteInfo.naverPlaceUrl],
   };
 

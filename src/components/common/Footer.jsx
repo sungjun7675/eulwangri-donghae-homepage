@@ -7,7 +7,7 @@ export default function Footer() {
         <strong>{siteInfo.name}</strong>
         <span>{siteInfo.sourceNote}</span>
       </p>
-      <p>리뷰 평점과 리뷰 수는 공식 연동 전까지 시안 값으로 표시합니다.</p>
+      <p>리뷰와 예약 가능 여부는 네이버 플레이스 또는 전화 문의로 확인하세요.</p>
     </footer>
   );
 }

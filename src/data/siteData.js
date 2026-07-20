@@ -44,14 +44,12 @@ export const navigationItems = [
 ];
 
 export const reviewSummary = {
-  provider: "네이버 리뷰 연동 준비",
-  rating: "4.85",
-  total: "2,487",
-  denominator: "5",
-  status: "시안",
-  totalLabel: "시안 리뷰 2,487건",
-  badge: "공식 데이터 연결 전",
-  rank: "실제 평점 확인 필요",
+  provider: "네이버 플레이스",
+  status: "확인",
+  headline: "최신 정보",
+  totalLabel: "리뷰·메뉴·예약은 네이버에서 확인",
+  badge: "방문 전 체크",
+  rank: "영업시간과 예약 가능 여부는 전화 확인 권장",
 };
 
 export const liveReviews = [

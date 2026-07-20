@@ -435,6 +435,34 @@ main {
   font-size: 18px;
 }
 
+.place-status-card .score-line {
+  align-items: center;
+}
+
+.place-status-card .score-line strong {
+  font-size: 31px;
+  line-height: 1.18;
+}
+
+.place-status-card .score-line span:last-child {
+  display: none;
+}
+
+.place-status-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 18px;
+  border: 1px solid rgba(216, 167, 53, 0.62);
+  border-radius: 7px;
+  color: #080705;
+  font-size: 14px;
+  font-weight: 900;
+  background: var(--color-gold-bright);
+}
+
 .scroll-cue {
   position: absolute;
   left: 4px;
@@ -652,7 +680,7 @@ main {
 }
 
 .feature-strip {
-  padding: 18px 0 24px;
+  padding: 32px 0 30px;
   background: linear-gradient(180deg, rgba(5, 6, 7, 0.1), rgba(8, 10, 12, 0.74));
 }
 
@@ -687,6 +715,7 @@ main {
 .feature-item h2,
 .feature-item p {
   margin: 0;
+  word-break: keep-all;
 }
 
 .feature-item h2 {
@@ -1206,6 +1235,94 @@ main {
 .gallery-section,
 .notice-section {
   padding: 44px 0;
+}
+
+.review-guide-section {
+  padding: 0 0 28px;
+}
+
+.subpage-view .review-guide-section {
+  padding: 0;
+}
+
+.review-guide-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: 28px 32px;
+  border: 1px solid rgba(216, 167, 53, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(216, 167, 53, 0.09), rgba(255, 255, 255, 0.025)),
+    rgba(9, 11, 13, 0.92);
+}
+
+.review-guide-panel > * {
+  min-width: 0;
+}
+
+.review-guide-panel h2,
+.review-guide-panel p,
+.review-guide-list,
+.review-guide-list dt,
+.review-guide-list dd {
+  margin: 0;
+}
+
+.review-guide-panel h2 {
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.review-guide-panel p:not(.section-eyebrow) {
+  max-width: 720px;
+  margin-top: 10px;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.review-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.review-guide-actions .button {
+  min-width: 156px;
+}
+
+.review-guide-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.review-guide-list div {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.review-guide-list dt {
+  color: var(--color-gold-bright);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.review-guide-list dd {
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .reservation-inner {
@@ -1784,7 +1901,7 @@ main {
   }
 
   .hero-section {
-    min-height: 840px;
+    min-height: 760px;
     padding-top: 92px;
   }
 
@@ -1805,7 +1922,7 @@ main {
     position: relative;
     inset: auto;
     width: min(100%, 360px);
-    margin-top: 34px;
+    margin-top: 28px;
   }
 
   .scroll-cue {
@@ -1814,6 +1931,14 @@ main {
 
   .live-review-section {
     margin-top: -34px;
+  }
+
+  .review-guide-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .review-guide-actions {
+    justify-content: flex-start;
   }
 
   .live-review-panel {
@@ -1935,11 +2060,11 @@ main {
   }
 
   .hero-section {
-    min-height: 930px;
+    min-height: 730px;
   }
 
   .hero-copy {
-    padding-top: 36px;
+    padding-top: 28px;
   }
 
   .hero-copy h1 {
@@ -1958,8 +2083,8 @@ main {
   }
 
   .review-score-card {
-    margin-top: 24px;
-    padding: 18px;
+    margin-top: 22px;
+    padding: 16px;
   }
 
   .score-line {
@@ -1968,6 +2093,14 @@ main {
 
   .score-line strong {
     font-size: 36px;
+  }
+
+  .place-status-card .score-line strong {
+    font-size: 24px;
+  }
+
+  .place-status-link {
+    display: none;
   }
 
   .score-divider {
@@ -1998,6 +2131,29 @@ main {
   .review-panel-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .review-guide-panel {
+    padding: 22px 18px;
+  }
+
+  .review-guide-panel h2 {
+    font-size: 22px;
+  }
+
+  .review-guide-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .review-guide-actions .button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .review-guide-list {
+    grid-template-columns: 1fr;
   }
 
   .subpage-view {

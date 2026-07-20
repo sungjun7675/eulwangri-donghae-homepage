@@ -1,10 +1,10 @@
 import GallerySection from "../components/sections/GallerySection.jsx";
 import HeroSection from "../components/sections/HeroSection.jsx";
-import LiveReviewSection from "../components/sections/LiveReviewSection.jsx";
 import MapSection from "../components/sections/MapSection.jsx";
 import MenuSection from "../components/sections/MenuSection.jsx";
 import NoticeSection from "../components/sections/NoticeSection.jsx";
 import ReservationSection from "../components/sections/ReservationSection.jsx";
+import ReviewGuideSection from "../components/sections/ReviewGuideSection.jsx";
 import ReviewSection from "../components/sections/ReviewSection.jsx";
 import StoreInfoSection from "../components/sections/StoreInfoSection.jsx";
 
@@ -22,7 +22,7 @@ const pageCopy = {
   reviews: {
     eyebrow: "Reviews",
     title: "방문자 리뷰",
-    description: "Supabase에 등록된 실제 공개 리뷰가 있으면 최신순으로 자동 표시됩니다.",
+    description: "자동 리뷰 연동은 보류하고, 네이버 플레이스에서 최신 리뷰를 확인하도록 연결했습니다.",
   },
   location: {
     eyebrow: "Location",
@@ -55,7 +55,6 @@ function HomeView() {
   return (
     <>
       <HeroSection />
-      <LiveReviewSection />
       <ReviewSection />
     </>
   );
@@ -87,7 +86,7 @@ export default function Home({ currentPage = "home" }) {
   if (currentPage === "reviews") {
     return (
       <PageView page="reviews">
-        <LiveReviewSection />
+        <ReviewGuideSection />
         <ReviewSection />
       </PageView>
     );

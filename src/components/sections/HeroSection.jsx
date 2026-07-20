@@ -37,20 +37,15 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <aside className="review-score-card" aria-label="네이버 방문자 리뷰 요약">
+        <aside className="review-score-card place-status-card" aria-label="네이버 플레이스 확인 안내">
           <div className="score-source">
             <span className="naver-letter">N</span>
             <span>{reviewSummary.provider}</span>
             <strong>{reviewSummary.status}</strong>
           </div>
           <div className="score-line">
-            <span className="score-star" aria-hidden="true">
-              ★
-            </span>
-            <strong>{reviewSummary.rating}</strong>
-            <span>
-              / {reviewSummary.denominator}
-            </span>
+            <span className="score-star" aria-hidden="true">◇</span>
+            <strong>{reviewSummary.headline}</strong>
           </div>
           <p>{reviewSummary.totalLabel}</p>
           <div className="score-divider" />
@@ -59,6 +54,9 @@ export default function HeroSection() {
             <small>{reviewSummary.badge}</small>
             <strong>{reviewSummary.rank}</strong>
           </p>
+          <a className="place-status-link" href={siteInfo.naverPlaceUrl} target="_blank" rel="noreferrer">
+            네이버에서 확인
+          </a>
         </aside>
 
         <div className="scroll-cue" aria-hidden="true">
