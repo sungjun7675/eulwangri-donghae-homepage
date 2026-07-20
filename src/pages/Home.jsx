@@ -1,5 +1,6 @@
 import GallerySection from "../components/sections/GallerySection.jsx";
 import HeroSection from "../components/sections/HeroSection.jsx";
+import LocalInfoSection from "../components/sections/LocalInfoSection.jsx";
 import MapSection from "../components/sections/MapSection.jsx";
 import MenuSection from "../components/sections/MenuSection.jsx";
 import NoticeSection from "../components/sections/NoticeSection.jsx";
@@ -56,6 +57,7 @@ function HomeView() {
     <>
       <HeroSection />
       <ReviewSection />
+      <LocalInfoSection />
     </>
   );
 }

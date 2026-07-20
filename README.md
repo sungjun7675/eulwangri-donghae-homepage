@@ -34,6 +34,12 @@ Review registration rules and SQL examples are documented at:
 docs/review-operations.md
 ```
 
+Launch, search registration, share preview, and custom-domain tasks are documented at:
+
+```text
+docs/launch-checklist.md
+```
+
 ## Review admin app
 
 The hidden mobile admin app is available after deployment at:

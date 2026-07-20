@@ -62,6 +62,33 @@ export const featureItems = [
   { label: "네이버 예약", description: "간편한 예약 시스템", icon: "naver" },
 ];
 
+export const localSeoItems = [
+  {
+    label: "을왕리 조개구이",
+    title: "해수욕장 인근 해산물 방문 코스",
+    description:
+      "을왕리해수욕장 인근에서 조개구이, 회, 해산물 세트를 한 번에 확인할 수 있도록 구성했습니다.",
+  },
+  {
+    label: "영종구 해산물",
+    title: "인천 영종구 을왕로 62",
+    description:
+      "네이버 검색 결과 기준 주소와 전화번호, 길찾기 링크를 연결해 방문 전 확인이 빠릅니다.",
+  },
+  {
+    label: "오션뷰·단체",
+    title: "오션뷰와 단체 이용 편의",
+    description:
+      "네이버 검색 결과 기준 단체 이용, 예약, 주차, 발렛파킹, 무선 인터넷 편의 정보를 반영했습니다.",
+  },
+  {
+    label: "네이버 리뷰",
+    title: "리뷰 3,351건 기준 안내",
+    description:
+      "방문자 리뷰와 실제 방문 사진은 네이버 플레이스에서 최신 상태로 확인할 수 있게 연결했습니다.",
+  },
+];
+
 export const storeHighlights = [
   {
     label: "을왕리해수욕장 인근",
@@ -160,24 +187,28 @@ export const menuItems = [
 export const galleryItems = [
   {
     name: "조개구이 한상",
+    caption: "불판 위에서 즐기는 을왕리 조개구이 대표 이미지",
     image: heroImage,
     alt: "불판 위 조개구이 한상 사진",
     imagePosition: "center",
   },
   {
     name: "회 한 접시",
+    caption: "회와 해산물 세트 구성을 함께 확인할 수 있는 메뉴 사진",
     image: sashimiImage,
     alt: "접시에 담긴 회 사진",
     imagePosition: "center",
   },
   {
     name: "치즈 가리비",
+    caption: "네이버 메뉴에 노출된 조개+치즈가리비 세트와 어울리는 메뉴 사진",
     image: grilledScallopImage,
     alt: "불판 위 치즈 가리비 사진",
     imagePosition: "center",
   },
   {
     name: "해물칼국수",
+    caption: "해산물 식사 메뉴를 찾는 방문자를 위한 식사 사진",
     image: seafoodKalguksuImage,
     alt: "해물칼국수 사진",
     imagePosition: "center",

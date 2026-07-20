@@ -10,15 +10,20 @@ export default function GallerySection() {
         </div>
         <div className="gallery-grid">
           {galleryItems.map((item) => (
-            <img
-              className="gallery-tile"
-              key={item.name}
-              src={item.image}
-              alt={item.alt}
-              loading="lazy"
-              decoding="async"
-              style={{ objectPosition: item.imagePosition }}
-            />
+            <figure className="gallery-card" key={item.name}>
+              <img
+                className="gallery-tile"
+                src={item.image}
+                alt={item.alt}
+                loading="lazy"
+                decoding="async"
+                style={{ objectPosition: item.imagePosition }}
+              />
+              <figcaption>
+                <strong>{item.name}</strong>
+                <span>{item.caption}</span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
