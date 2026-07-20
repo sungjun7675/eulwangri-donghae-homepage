@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
-import { extractReviewMetadata, maskReviewAuthor } from "../utils/reviewText.js";
+import {
+  extractReviewMetadata,
+  getReviewTextQuality,
+  isPublishableReview,
+  maskReviewAuthor,
+} from "../utils/reviewText.js";
 
 const REVIEW_PHOTO_BUCKET = "review-photos";
 const DEFAULT_ADMIN_EMAIL = "tjdrhkde@gmail.com";
@@ -765,6 +770,7 @@ export default function Admin() {
       const cleanedText = extractedReview.text;
       const fallbackText = rawText.trim().slice(0, 900);
       const nextText = cleanedText;
+      const textQuality = getReviewTextQuality(nextText || fallbackText);
 
       setOcrText(nextText || fallbackText);
       setForm((current) => ({
@@ -773,11 +779,12 @@ export default function Admin() {
         rating: extractedReview.rating || current.rating,
         time: extractedReview.time || current.time,
         text: nextText || current.text,
+        isPublished: textQuality.isUsable ? current.isPublished : false,
       }));
       setOcrStatus(
-        cleanedText
+        cleanedText && textQuality.isUsable
           ? "OCR 읽기와 자동 정제가 완료되었습니다. 내용을 확인하고 저장하세요."
-          : "OCR은 됐지만 자동 정제할 문장을 찾지 못했습니다. 직접 필요한 문구만 남기세요.",
+          : "촬영본 OCR 품질이 낮아 비공개로 전환했습니다. 실제 리뷰 문구를 직접 확인해서 수정한 뒤 공개하세요.",
       );
     } catch (error) {
       setOcrStatus(`OCR 실패: ${error.message}`);
@@ -821,6 +828,13 @@ export default function Admin() {
 
     if (!form.author.trim()) {
       setSubmitStatus("작성자 아이디를 확인하세요. 캡처에서 못 읽은 경우 직접 입력해야 합니다.");
+      return;
+    }
+
+    if (form.isPublished && !isPublishableReview({ author: form.author, text: form.text })) {
+      setSubmitStatus(
+        "OCR 품질이 낮거나 작성자/본문이 불완전합니다. 실제 리뷰 문구를 수정하거나 비공개로 저장하세요.",
+      );
       return;
     }
 

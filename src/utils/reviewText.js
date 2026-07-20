@@ -24,7 +24,18 @@ const noisePatterns = [
   /더보기|음식이\s*맛있어요|친절해요|뷰가\s*좋아요/,
   /예약\s*없이|대기\s*시간|바로\s*입장|나들이|데이트/,
   /번째\s*방문|영수증|점심에\s*방문|저녁에\s*방문/,
+  /팔로우|만족도\s*\d+|서비스\s*\d+|조개구이\s*\d+|칼국수\s*\d+/,
 ];
+
+const brokenOcrPatterns = [
+  /[+*＊]\s*\d+/,
+  /[A-Za-z]\s+[A-Za-z]/,
+  /(^|\s)[A-Za-z]{1,2}(\s|$)/,
+  /모측|모축|모드\s+바|시인들|바조|모착|모축하여/,
+];
+
+const sentenceStartNoisePattern = /^(에|로|랑|와|과|은|는|이|가|을|를|도|만)\s/;
+const maskedAuthorPattern = /[A-Za-z0-9가-힣]{2,}[*＊]{2,}[A-Za-z0-9가-힣]*/;
 
 const normalizeLine = (line) =>
   line
@@ -45,6 +56,14 @@ const isLikelyReviewLine = (line) => {
     return false;
   }
 
+  if (brokenOcrPatterns.some((pattern) => pattern.test(line))) {
+    return false;
+  }
+
+  if (sentenceStartNoisePattern.test(line)) {
+    return false;
+  }
+
   const compact = line.replace(/\s/g, "");
   const hangulCount = (compact.match(/[가-힣]/g) ?? []).length;
   const latinCount = (compact.match(/[A-Za-z]/g) ?? []).length;
@@ -52,6 +71,10 @@ const isLikelyReviewLine = (line) => {
   const symbolCount = (compact.match(/[^가-힣A-Za-z0-9.,!?~ㅋㅎㅠㅜ]/g) ?? []).length;
 
   if (hangulCount < 8) {
+    return false;
+  }
+
+  if (latinCount > 0 && hangulCount > 5) {
     return false;
   }
 
@@ -88,13 +111,24 @@ const getCandidateLines = (value) =>
 const cleanAuthorCandidate = (line) =>
   line
     .replace(/^[A-Za-z]\s+(?=[가-힣])/u, "")
-    .replace(/[^\p{L}\p{N}_-]+/gu, "")
+    .replace(/[^\p{L}\p{N}_*＊-]+/gu, "")
+    .replace(/＊/g, "*")
     .trim();
 
 const extractAuthor = (value) => {
-  const candidates = getCandidateLines(value)
+  const lines = getCandidateLines(value)
     .filter((line) => !noiseTerms.some((term) => line.includes(term)))
-    .filter((line) => !noisePatterns.some((pattern) => pattern.test(line)))
+    .filter((line) => !noisePatterns.some((pattern) => pattern.test(line)));
+
+  const maskedAuthor = lines
+    .map((line) => cleanAuthorCandidate(line).match(maskedAuthorPattern)?.[0] ?? "")
+    .find((line) => line.length >= 4 && line.length <= 18);
+
+  if (maskedAuthor) {
+    return maskedAuthor;
+  }
+
+  const candidates = lines
     .map(cleanAuthorCandidate)
     .filter((line) => {
       const hangulCount = (line.match(/[가-힣]/g) ?? []).length;
@@ -205,3 +239,29 @@ export const formatPublicReviewAuthor = (review) => {
 
 export const formatPublicReviewTime = (review) =>
   extractReviewMetadata(review?.text).time || review?.time || "최근 리뷰";
+
+export const getReviewTextQuality = (value) => {
+  const normalizedText = normalizeOcrReviewText(value, 900).replace(/\s+/g, " ").trim();
+  const hangulCount = (normalizedText.match(/[가-힣]/g) ?? []).length;
+  const brokenScore = brokenOcrPatterns.filter((pattern) => pattern.test(String(value ?? ""))).length;
+
+  return {
+    hangulCount,
+    isUsable: hangulCount >= 32 && brokenScore === 0,
+    normalizedText,
+  };
+};
+
+export const isPublishableReview = ({ author, text }) => {
+  const rawAuthor = String(author ?? "").trim();
+  const publicAuthor = maskReviewAuthor(author);
+  const quality = getReviewTextQuality(text);
+
+  return Boolean(
+    rawAuthor &&
+      rawAuthor !== "작성자 확인" &&
+      publicAuthor !== "작성자 확인" &&
+      !/^방문자\*+/.test(publicAuthor) &&
+      quality.isUsable,
+  );
+};

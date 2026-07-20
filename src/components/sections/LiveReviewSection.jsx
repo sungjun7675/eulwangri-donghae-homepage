@@ -5,6 +5,7 @@ import {
   formatPublicReviewAuthor,
   formatPublicReviewText,
   formatPublicReviewTime,
+  isPublishableReview,
 } from "../../utils/reviewText.js";
 
 const AUTO_SCROLL_INTERVAL_MS = 3200;
@@ -47,7 +48,9 @@ export default function LiveReviewSection() {
         reviewTime,
       };
     })
-    .filter(({ reviewAuthor, reviewText }) => reviewText && reviewAuthor !== "작성자 확인");
+    .filter(({ review, reviewAuthor, reviewText }) =>
+      reviewText && isPublishableReview({ author: reviewAuthor, text: review.text }),
+    );
   const shouldAutoScroll =
     reviewItems.length > 1 && isAutoScrollEnabled && !isInteractionPaused && !prefersReducedMotion;
 
