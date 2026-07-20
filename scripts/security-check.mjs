@@ -66,11 +66,20 @@ const nonDocFiles = sourceFiles.filter(
 
 check("package is private", packageJson.private === true);
 check("security script is registered", packageJson.scripts?.["security:check"] === "node scripts/security-check.mjs");
+check(
+  "Supabase live security script is registered",
+  packageJson.scripts?.["security:supabase"] === "node scripts/supabase-security-check.mjs",
+);
+check(
+  "HTTP header security script is registered",
+  packageJson.scripts?.["security:headers"] === "node scripts/header-check.mjs",
+);
 check(".env and .env.local are ignored", gitignore.includes(".env") && gitignore.includes(".env.local"));
 check(
   "only .env.example is tracked",
   trackedFiles.filter((file) => file.startsWith(".env") && file !== ".env.example").length === 0,
 );
+check("admin edge function flag is documented", read(".env.example").includes("VITE_USE_ADMIN_EDGE_FUNCTIONS=false"));
 
 const secretPattern =
   /(sb_secret_[A-Za-z0-9_.-]{20,}|BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY|VITE_SUPABASE_SERVICE)/i;
@@ -84,6 +93,10 @@ check("Supabase auth uses sessionStorage", supabaseClient.includes("window.sessi
 check("Supabase client rejects service_role-like keys", supabaseClient.includes("service_role"));
 
 const admin = read("src/pages/Admin.jsx");
+const adminReviewApi = read("src/lib/adminReviewApi.js");
+check("admin edge function client is isolated", adminReviewApi.includes("invokeAdminReviewAction"));
+check("admin edge function mode is feature-flagged", adminReviewApi.includes("VITE_USE_ADMIN_EDGE_FUNCTIONS"));
+check("admin mutations can use edge function boundary", admin.includes("invokeAdminReviewAction"));
 check("admin file upload size limit is present", admin.includes("MAX_REVIEW_UPLOAD_SIZE_BYTES"));
 check("admin file MIME allow-list is present", admin.includes("ALLOWED_REVIEW_IMAGE_TYPES"));
 check("admin stores private image paths", admin.includes("image_paths"));
@@ -94,6 +107,7 @@ check("admin no longer creates public storage URLs", !admin.includes(".getPublic
 check("admin form applies local submit throttling", admin.includes("MIN_REVIEW_SUBMIT_INTERVAL_MS"));
 
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
+const finalBoundaryMigration = "supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql";
 check("security hardening migration exists", existsSync(join(root, hardeningMigration)));
 
 if (existsSync(join(root, hardeningMigration))) {
@@ -102,6 +116,30 @@ if (existsSync(join(root, hardeningMigration))) {
   check("storage upload paths are scoped to auth.uid", migration.includes("name like (auth.uid()::text || '/%')"));
   check("audit log table is created", migration.includes("homepage_review_audit_logs"));
   check("review input DB constraints are present", migration.includes("homepage_reviews_text_length_chk"));
+}
+
+check("admin boundary and rate limit migration exists", existsSync(join(root, finalBoundaryMigration)));
+
+if (existsSync(join(root, finalBoundaryMigration))) {
+  const migration = read(finalBoundaryMigration);
+  check("inactive admins are blocked in DB function", migration.includes("is_active is true"));
+  check("public review table policy is removed", migration.includes('drop policy if exists "Published homepage reviews are readable"'));
+  check("rate limit table is created", migration.includes("homepage_security_rate_limits"));
+  check("service-role-only rate limit RPC is created", migration.includes("homepage_take_rate_limit") && migration.includes("to service_role"));
+}
+
+const edgeFunctionPath = "supabase/functions/admin-review/index.ts";
+check("admin edge function exists", existsSync(join(root, edgeFunctionPath)));
+
+if (existsSync(join(root, edgeFunctionPath))) {
+  const edgeFunction = read(edgeFunctionPath);
+  check("edge function keeps service role server-side", edgeFunction.includes("SUPABASE_SERVICE_ROLE_KEY"));
+  check("edge function verifies JWT user", edgeFunction.includes("auth.getUser()"));
+  check("edge function checks active admin", edgeFunction.includes(".eq(\"is_active\", true)"));
+  check("edge function applies server rate limit", edgeFunction.includes("homepage_take_rate_limit"));
+  check("edge function applies origin allow-list", edgeFunction.includes("ALLOWED_ADMIN_ORIGINS"));
+  check("edge function does not use wildcard CORS", !edgeFunction.includes('"Access-Control-Allow-Origin": "*"'));
+  check("edge function avoids response caching", edgeFunction.includes('"Cache-Control": "no-store"'));
 }
 
 const indexHtml = read("index.html");
@@ -127,6 +165,20 @@ check("service worker caches only successful basic responses", serviceWorker.inc
 const workflow = read(".github/workflows/deploy-pages.yml");
 check("GitHub Pages workflow has least-privilege permissions", workflow.includes("contents: read") && workflow.includes("pages: write") && workflow.includes("id-token: write"));
 check("GitHub Pages workflow runs security check before build", workflow.includes("npm run security:check"));
+check("GitHub Pages workflow runs Supabase boundary check", workflow.includes("npm run security:supabase"));
+check("GitHub Pages workflow passes edge-function feature flag", workflow.includes("VITE_USE_ADMIN_EDGE_FUNCTIONS"));
+
+const scheduledAudit = read(".github/workflows/security-audit.yml");
+check("scheduled security audit workflow exists", scheduledAudit.includes("Scheduled security audit"));
+check("scheduled security audit runs dependency audit", scheduledAudit.includes("npm audit --audit-level=moderate"));
+check("scheduled security audit runs production build", scheduledAudit.includes("npm run build"));
+
+const supabaseDeployWorkflow = read(".github/workflows/deploy-supabase-security.yml");
+check("manual Supabase security deploy workflow exists", supabaseDeployWorkflow.includes("Deploy Supabase security boundary"));
+check("Supabase deploy workflow applies migrations", supabaseDeployWorkflow.includes("20260720230000_harden_admin_boundary_and_rate_limit.sql"));
+check("Supabase deploy workflow deploys admin edge function", supabaseDeployWorkflow.includes("functions deploy admin-review"));
+check("Supabase deploy workflow requires access token", supabaseDeployWorkflow.includes("SUPABASE_ACCESS_TOKEN"));
+check("Supabase deploy workflow requires DB URL", supabaseDeployWorkflow.includes("SUPABASE_DB_URL"));
 
 const failed = results.filter((result) => result.status === "FAIL");
 

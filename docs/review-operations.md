@@ -13,10 +13,12 @@ supabase/migrations/20260719123000_create_homepage_reviews.sql
 supabase/migrations/20260719130500_add_review_source_fields.sql
 supabase/migrations/20260720001000_add_admin_reviews_and_photos.sql
 supabase/migrations/20260720223000_harden_admin_reviews_security.sql
+supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql
 ```
 
 세 번째 마이그레이션은 관리자 앱 권한, 리뷰 사진 저장 버킷, `image_urls` 컬럼을 만듭니다.
 네 번째 마이그레이션은 사진 버킷 private 전환, signed URL 접근, 감사 로그, `image_paths`, `image_hashes`를 추가합니다.
+다섯 번째 마이그레이션은 비활성 관리자 차단, 내부 리뷰 테이블 공개 읽기 제거, 서버 rate limit 기반을 추가합니다.
 
 ## 2. 관리자 계정 준비
 
@@ -52,7 +54,7 @@ https://sungjun7675.github.io/eulwangri-donghae-homepage/#admin
 
 ```sql
 insert into public.homepage_reviews
-  (author, label, text, time, rating, source_type, source_url, image_urls, is_published)
+  (author, label, text, time, rating, source_type, source_url, image_paths, image_hashes, image_urls, is_published)
 values
   (
     '작성자명',
@@ -62,10 +64,14 @@ values
     5,
     'naver',
     '리뷰 확인 URL',
-    array['https://사진주소.example/review.jpg'],
+    array[]::text[],
+    array[]::text[],
+    array[]::text[],
     true
   );
 ```
+
+사진이 있는 리뷰는 관리자 앱으로 업로드하는 방식을 우선 사용합니다. SQL로 직접 등록할 때는 private storage에 먼저 업로드한 경로만 `image_paths`에 넣고, 외부 공개 URL을 새로 넣지 않습니다.
 
 ## 5. 자동 반영 방식
 

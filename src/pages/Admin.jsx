@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
+import { invokeAdminReviewAction, isAdminEdgeFunctionsEnabled } from "../lib/adminReviewApi.js";
 import { isSupabaseConfigured, supabase, supabaseConfigStatus } from "../lib/supabaseClient.js";
 import {
   extractReviewMetadata,
@@ -684,7 +685,6 @@ export default function Admin() {
   }, [photoFiles]);
 
   const createSignedReviewPhotoUrls = async (review) => {
-    const bucket = supabase.storage.from(REVIEW_PHOTO_BUCKET);
     const storedPaths = [
       ...(Array.isArray(review.image_paths) ? review.image_paths : []),
       ...(Array.isArray(review.image_urls)
@@ -692,16 +692,25 @@ export default function Admin() {
         : []),
     ];
     const uniquePaths = Array.from(new Set(storedPaths)).slice(0, MAX_REVIEW_PHOTOS);
-    const signedUrls = [];
+    let signedUrls = [];
 
-    for (const path of uniquePaths) {
-      const { data, error } = await bucket.createSignedUrl(
-        path,
-        SIGNED_REVIEW_PHOTO_EXPIRES_IN_SECONDS,
-      );
+    if (isAdminEdgeFunctionsEnabled && uniquePaths.length > 0) {
+      const signedData = await invokeAdminReviewAction(supabase, "signedPhotoUrls", {
+        paths: uniquePaths,
+      });
+      signedUrls = Array.isArray(signedData?.signedUrls) ? signedData.signedUrls : [];
+    } else {
+      const bucket = supabase.storage.from(REVIEW_PHOTO_BUCKET);
 
-      if (!error && data?.signedUrl) {
-        signedUrls.push(data.signedUrl);
+      for (const path of uniquePaths) {
+        const { data, error } = await bucket.createSignedUrl(
+          path,
+          SIGNED_REVIEW_PHOTO_EXPIRES_IN_SECONDS,
+        );
+
+        if (!error && data?.signedUrl) {
+          signedUrls.push(data.signedUrl);
+        }
       }
     }
 
@@ -1100,50 +1109,66 @@ export default function Admin() {
     try {
       const rating = Number(form.rating);
       const { imagePaths, imageHashes } = await uploadReviewPhotos();
+      const reviewPayload = {
+        author: maskReviewAuthor(author),
+        label: makeStarLabel(rating),
+        text: reviewText,
+        time: reviewTime || null,
+        rating,
+        sourceUrl,
+        imagePaths,
+        imageHashes,
+        isPublished: form.isPublished,
+      };
+      let saveStatus = "저장 완료. 공개 가능 데이터로 보관되었습니다.";
 
-      const photoAuditWarning =
-        imagePaths.length > 0
-          ? await recordAuditLog("review_photo_upload", { image_count: imagePaths.length })
-          : "";
+      if (isAdminEdgeFunctionsEnabled) {
+        await invokeAdminReviewAction(supabase, "createReview", reviewPayload);
+      } else {
+        const photoAuditWarning =
+          imagePaths.length > 0
+            ? await recordAuditLog("review_photo_upload", { image_count: imagePaths.length })
+            : "";
 
-      const { data, error } = await supabase
-        .from("homepage_reviews")
-        .insert({
-          author: maskReviewAuthor(author),
-          label: makeStarLabel(rating),
-          text: reviewText,
-          time: reviewTime || null,
-          rating,
-          source_type: "naver",
-          source_url: sourceUrl,
-          image_paths: imagePaths,
-          image_hashes: imageHashes,
-          image_urls: [],
-          is_published: form.isPublished,
-        })
-        .select("id")
-        .single();
+        const { data, error } = await supabase
+          .from("homepage_reviews")
+          .insert({
+            author: reviewPayload.author,
+            label: reviewPayload.label,
+            text: reviewPayload.text,
+            time: reviewPayload.time,
+            rating,
+            source_type: "naver",
+            source_url: sourceUrl,
+            image_paths: imagePaths,
+            image_hashes: imageHashes,
+            image_urls: [],
+            is_published: form.isPublished,
+          })
+          .select("id")
+          .single();
 
-      if (error) {
-        throw new Error("리뷰 저장에 실패했습니다.");
+        if (error) {
+          throw new Error("리뷰 저장에 실패했습니다.");
+        }
+
+        const createAuditWarning = await recordAuditLog(
+          "review_create",
+          {
+            is_published: form.isPublished,
+            image_count: imagePaths.length,
+            has_source_url: Boolean(sourceUrl),
+          },
+          data?.id ?? null,
+        );
+
+        if (photoAuditWarning || createAuditWarning) {
+          saveStatus = `저장 완료. ${photoAuditWarning || createAuditWarning}`;
+        }
       }
 
-      const createAuditWarning = await recordAuditLog(
-        "review_create",
-        {
-          is_published: form.isPublished,
-          image_count: imagePaths.length,
-          has_source_url: Boolean(sourceUrl),
-        },
-        data?.id ?? null,
-      );
-
       resetForm();
-      setSubmitStatus(
-        photoAuditWarning || createAuditWarning
-          ? `저장 완료. ${photoAuditWarning || createAuditWarning}`
-          : "저장 완료. 공개 가능 데이터로 보관되었습니다.",
-      );
+      setSubmitStatus(saveStatus);
       await loadAdminReviews();
     } catch (error) {
       const message = error instanceof Error ? String(error).replace(/^Error:\s*/, "") : "";
@@ -1155,26 +1180,41 @@ export default function Admin() {
 
   const handleTogglePublished = async (review) => {
     const nextPublished = !review.is_published;
-    const { error } = await supabase
-      .from("homepage_reviews")
-      .update({ is_published: nextPublished })
-      .eq("id", review.id);
+    let listWarning = "";
 
-    if (error) {
+    try {
+      if (isAdminEdgeFunctionsEnabled) {
+        await invokeAdminReviewAction(supabase, "togglePublished", {
+          id: review.id,
+          isPublished: nextPublished,
+        });
+      } else {
+        const { error } = await supabase
+          .from("homepage_reviews")
+          .update({ is_published: nextPublished })
+          .eq("id", review.id);
+
+        if (error) {
+          throw new Error("공개 상태를 변경하지 못했습니다.");
+        }
+
+        const auditWarning = await recordAuditLog(
+          "review_publish_toggle",
+          { is_published: nextPublished },
+          review.id,
+        );
+
+        if (auditWarning) {
+          listWarning = `공개 상태는 변경됐지만 ${auditWarning}`;
+        }
+      }
+
+      await loadAdminReviews();
+      if (listWarning) {
+        setListStatus(listWarning);
+      }
+    } catch {
       setListStatus("공개 상태를 변경하지 못했습니다. 관리자 권한을 확인하세요.");
-      return;
-    }
-
-    const auditWarning = await recordAuditLog(
-      "review_publish_toggle",
-      { is_published: nextPublished },
-      review.id,
-    );
-
-    await loadAdminReviews();
-
-    if (auditWarning) {
-      setListStatus(`공개 상태는 변경됐지만 ${auditWarning}`);
     }
   };
 
@@ -1185,28 +1225,45 @@ export default function Admin() {
       return;
     }
 
-    const { error } = await supabase.from("homepage_reviews").delete().eq("id", review.id);
+    const imageCount =
+      (Array.isArray(review.image_paths) ? review.image_paths.length : 0) +
+      (Array.isArray(review.image_urls) ? review.image_urls.length : 0);
+    let listWarning = "";
 
-    if (error) {
+    try {
+      if (isAdminEdgeFunctionsEnabled) {
+        await invokeAdminReviewAction(supabase, "deleteReview", {
+          id: review.id,
+          wasPublished: Boolean(review.is_published),
+          imageCount,
+        });
+      } else {
+        const { error } = await supabase.from("homepage_reviews").delete().eq("id", review.id);
+
+        if (error) {
+          throw new Error("삭제하지 못했습니다.");
+        }
+
+        const auditWarning = await recordAuditLog(
+          "review_delete",
+          {
+            was_published: Boolean(review.is_published),
+            image_count: imageCount,
+          },
+          review.id,
+        );
+
+        if (auditWarning) {
+          listWarning = `리뷰는 삭제됐지만 ${auditWarning}`;
+        }
+      }
+
+      await loadAdminReviews();
+      if (listWarning) {
+        setListStatus(listWarning);
+      }
+    } catch {
       setListStatus("삭제하지 못했습니다. 관리자 권한을 확인하세요.");
-      return;
-    }
-
-    const auditWarning = await recordAuditLog(
-      "review_delete",
-      {
-        was_published: Boolean(review.is_published),
-        image_count:
-          (Array.isArray(review.image_paths) ? review.image_paths.length : 0) +
-          (Array.isArray(review.image_urls) ? review.image_urls.length : 0),
-      },
-      review.id,
-    );
-
-    await loadAdminReviews();
-
-    if (auditWarning) {
-      setListStatus(`리뷰는 삭제됐지만 ${auditWarning}`);
     }
   };
 
@@ -1261,6 +1318,10 @@ export default function Admin() {
               <div>
                 <span>로그인 계정</span>
                 <strong>{userEmail}</strong>
+                <p>
+                  관리자 작업 경계:{" "}
+                  {isAdminEdgeFunctionsEnabled ? "Edge Function 서버 검증" : "Supabase RLS 직접 검증"}
+                </p>
                 {adminStatus.isChecking ? <p>관리자 권한 확인 중입니다.</p> : null}
                 {adminStatus.error ? <p>{adminStatus.error}</p> : null}
               </div>

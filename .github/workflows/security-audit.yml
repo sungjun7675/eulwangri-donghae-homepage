@@ -1,22 +1,15 @@
-name: Deploy to GitHub Pages
+name: Scheduled security audit
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 18 * * 0"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: github-pages
-  cancel-in-progress: true
 
 jobs:
-  build:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Security check
+      - name: Static security check
         run: npm run security:check
 
       - name: Supabase boundary check
@@ -40,29 +33,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Build
+      - name: Dependency audit
+        run: npm audit --audit-level=moderate
+
+      - name: Production build
         run: npm run build
         env:
           GITHUB_PAGES: "true"
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_USE_ADMIN_EDGE_FUNCTIONS: ${{ secrets.VITE_USE_ADMIN_EDGE_FUNCTIONS }}
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4

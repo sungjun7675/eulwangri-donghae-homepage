@@ -1,0 +1,4 @@
+project_id = "edfrlptpeuhjsgxdfwke"
+
+[functions.admin-review]
+verify_jwt = true

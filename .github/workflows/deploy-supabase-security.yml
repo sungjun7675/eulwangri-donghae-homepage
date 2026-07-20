@@ -1,0 +1,42 @@
+name: Deploy Supabase security boundary
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_PROJECT_REF: edfrlptpeuhjsgxdfwke
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      ALLOWED_ADMIN_ORIGINS: https://sungjun7675.github.io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_URL"
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply Supabase migrations
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260719123000_create_homepage_reviews.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260719130500_add_review_source_fields.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260720001000_add_admin_reviews_and_photos.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260720223000_harden_admin_reviews_security.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql
+
+      - name: Deploy admin-review Edge Function
+        run: |
+          npx supabase secrets set ALLOWED_ADMIN_ORIGINS="$ALLOWED_ADMIN_ORIGINS" --project-ref "$SUPABASE_PROJECT_REF"
+          npx supabase functions deploy admin-review --project-ref "$SUPABASE_PROJECT_REF"
