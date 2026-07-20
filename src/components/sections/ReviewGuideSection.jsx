@@ -8,8 +8,8 @@ export default function ReviewGuideSection() {
           <p className="section-eyebrow">Naver Reviews</p>
           <h2 id="review-guide-title">네이버 플레이스에서 리뷰 확인</h2>
           <p>
-            자동 리뷰 연동은 현재 보류 중입니다. 최신 방문자 리뷰, 사진, 예약 가능 여부는
-            네이버 플레이스와 전화 문의를 기준으로 확인하는 구성이 가장 정확합니다.
+            방문자 리뷰와 실제 방문 사진은 네이버 플레이스에서 가장 최신 상태로 확인할 수
+            있습니다. 예약 가능 여부와 당일 영업 상태도 방문 전 함께 확인하세요.
           </p>
         </div>
         <div className="review-guide-actions">
@@ -21,10 +21,14 @@ export default function ReviewGuideSection() {
             전화 문의
           </a>
         </div>
-        <dl className="review-guide-list" aria-label="리뷰 운영 상태">
+        <dl className="review-guide-list" aria-label="네이버 리뷰 정보">
           <div>
             <dt>{reviewSummary.provider}</dt>
-            <dd>{reviewSummary.totalLabel}</dd>
+            <dd>{reviewSummary.headline}</dd>
+          </div>
+          <div>
+            <dt>{reviewSummary.totalLabel}</dt>
+            <dd>{reviewSummary.status}</dd>
           </div>
           <div>
             <dt>{reviewSummary.badge}</dt>

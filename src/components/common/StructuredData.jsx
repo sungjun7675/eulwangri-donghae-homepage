@@ -7,30 +7,18 @@ export default function StructuredData() {
     name: siteInfo.name,
     description: siteInfo.description,
     url: siteInfo.siteUrl,
+    image: `${siteInfo.siteUrl}og-hero-cinematic.jpg`,
     telephone: siteInfo.phone,
     servesCuisine: ["조개구이", "회", "해산물"],
-    priceRange: "방문 전 확인",
+    priceRange: "₩₩₩",
+    acceptsReservations: true,
     address: {
       "@type": "PostalAddress",
       streetAddress: "을왕로 62",
-      addressLocality: "중구",
+      addressLocality: "영종구",
       addressRegion: "인천",
       addressCountry: "KR",
     },
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Sunday"],
-        opens: "10:00",
-        closes: "22:00",
-      },
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Friday", "Saturday"],
-        opens: "10:00",
-        closes: "01:00",
-      },
-    ],
     geo: {
       "@type": "GeoCoordinates",
       latitude: siteInfo.latitude,
@@ -38,6 +26,7 @@ export default function StructuredData() {
     },
     hasMap: siteInfo.directionsUrl,
     sameAs: [siteInfo.naverPlaceUrl],
+    menu: siteInfo.naverPlaceUrl,
   };
 
   return (

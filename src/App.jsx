@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import MainLayout from "./components/layout/MainLayout.jsx";
 import { navigationItems } from "./data/siteData.js";
-import Admin from "./pages/Admin.jsx";
 import Home from "./pages/Home.jsx";
 
+const Admin = lazy(() => import("./pages/Admin.jsx"));
 const availablePages = new Set([...navigationItems.map((item) => item.id), "admin"]);
 
 function getCurrentPageFromHash() {
@@ -31,7 +31,22 @@ export default function App() {
 
   return (
     <MainLayout currentPage={currentPage}>
-      {currentPage === "admin" ? <Admin /> : <Home currentPage={currentPage} />}
+      {currentPage === "admin" ? (
+        <Suspense
+          fallback={
+            <main className="admin-page">
+              <section className="admin-card">
+                <p className="section-eyebrow">Admin</p>
+                <h1>관리자 화면을 불러오는 중입니다</h1>
+              </section>
+            </main>
+          }
+        >
+          <Admin />
+        </Suspense>
+      ) : (
+        <Home currentPage={currentPage} />
+      )}
     </MainLayout>
   );
 }

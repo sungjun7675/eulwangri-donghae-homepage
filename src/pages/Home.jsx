@@ -22,7 +22,7 @@ const pageCopy = {
   reviews: {
     eyebrow: "Reviews",
     title: "방문자 리뷰",
-    description: "자동 리뷰 연동은 보류하고, 네이버 플레이스에서 최신 리뷰를 확인하도록 연결했습니다.",
+    description: "네이버 플레이스 기준 최신 리뷰와 방문자 사진을 확인할 수 있도록 연결했습니다.",
   },
   location: {
     eyebrow: "Location",
@@ -32,7 +32,7 @@ const pageCopy = {
   reservation: {
     eyebrow: "Guide",
     title: "이용안내",
-    description: "예약 확인, 전화 문의, 데이터 출처 안내를 한 화면에 정리했습니다.",
+    description: "예약, 영업 상태, 메뉴 가격대와 방문 전 확인 사항을 한 화면에 정리했습니다.",
   },
 };
 

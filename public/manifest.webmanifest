@@ -1,8 +1,8 @@
 {
-  "name": "을왕리 동해회조개구이 리뷰 관리자",
-  "short_name": "동해 리뷰관리",
-  "description": "을왕리 동해회조개구이 홈페이지 리뷰와 사진을 관리하는 모바일 관리자 앱",
-  "start_url": "/eulwangri-donghae-homepage/#admin",
+  "name": "을왕리 동해회조개구이",
+  "short_name": "동해회조개구이",
+  "description": "을왕리 동해회조개구이 메뉴, 위치, 예약, 네이버 플레이스 안내",
+  "start_url": "/eulwangri-donghae-homepage/",
   "scope": "/eulwangri-donghae-homepage/",
   "display": "standalone",
   "background_color": "#050607",

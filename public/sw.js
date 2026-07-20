@@ -1,4 +1,4 @@
-const CACHE_NAME = "donghae-homepage-v2";
+const CACHE_NAME = "donghae-homepage-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

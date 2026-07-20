@@ -22,7 +22,7 @@ export default function MapSection() {
           네이버 지도
         </a>
       </div>
-      <div className="map-preview" role="img" aria-label="을왕리 해변 인근 위치를 표현한 지도 시안">
+      <div className="map-preview" role="img" aria-label="을왕리 해변 인근 위치 안내 지도">
         <span className="map-water" />
         <span className="map-land" />
         <span className="map-road map-road-main" />
