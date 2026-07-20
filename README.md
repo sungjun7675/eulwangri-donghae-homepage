@@ -26,6 +26,7 @@ The optional review table SQL is prepared at:
 supabase/migrations/20260719123000_create_homepage_reviews.sql
 supabase/migrations/20260719130500_add_review_source_fields.sql
 supabase/migrations/20260720001000_add_admin_reviews_and_photos.sql
+supabase/migrations/20260720223000_harden_admin_reviews_security.sql
 ```
 
 Review registration rules and SQL examples are documented at:
@@ -38,6 +39,12 @@ Launch, search registration, share preview, and custom-domain tasks are document
 
 ```text
 docs/launch-checklist.md
+```
+
+Security hardening notes are documented at:
+
+```text
+docs/security-hardening.md
 ```
 
 ## Review admin app
@@ -53,6 +60,12 @@ It uses Supabase Auth, RLS, and the public `review-photos` storage bucket create
 ## GitHub Pages deployment
 
 The repository includes `.github/workflows/deploy-pages.yml`.
+
+The workflow runs the repository security check before building:
+
+```bash
+npm run security:check
+```
 
 In GitHub, set repository secrets before production deployment:
 

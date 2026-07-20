@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
-import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
+import { isSupabaseConfigured, supabase, supabaseConfigStatus } from "../lib/supabaseClient.js";
 import {
   extractReviewMetadata,
   getReviewTextQuality,
@@ -11,8 +11,133 @@ import {
 const REVIEW_PHOTO_BUCKET = "review-photos";
 const DEFAULT_ADMIN_EMAIL = "tjdrhkde@gmail.com";
 const MAX_REVIEW_PHOTOS = 8;
+const MAX_REVIEW_UPLOAD_INPUT_FILES = 12;
+const MAX_REVIEW_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_REVIEW_TEXT_LENGTH = 1200;
+const MAX_REVIEW_AUTHOR_LENGTH = 40;
+const MAX_REVIEW_TIME_LENGTH = 40;
+const MAX_SOURCE_URL_LENGTH = 500;
+const MIN_SIGN_IN_INTERVAL_MS = 2500;
+const MIN_REVIEW_SUBMIT_INTERVAL_MS = 2500;
+const SIGNED_REVIEW_PHOTO_EXPIRES_IN_SECONDS = 60 * 60;
+const ALLOWED_REVIEW_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+const ALLOWED_REVIEW_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "heic", "heif"]);
+const REVIEW_PHOTO_ACCEPT = Array.from(ALLOWED_REVIEW_IMAGE_TYPES).join(",");
+const REVIEW_PHOTO_PUBLIC_SEGMENT = `/storage/v1/object/public/${REVIEW_PHOTO_BUCKET}/`;
 
 const makeStarLabel = (rating) => `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`;
+
+const sanitizeSingleLine = (value, maxLength) =>
+  String(value ?? "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+
+const sanitizeReviewText = (value) =>
+  String(value ?? "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .trim()
+    .slice(0, MAX_REVIEW_TEXT_LENGTH);
+
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? "").trim());
+
+const normalizeSourceUrl = (value) => {
+  const trimmed = sanitizeSingleLine(value, MAX_SOURCE_URL_LENGTH);
+
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    const url = new URL(trimmed);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return "";
+    }
+
+    return url.href.slice(0, MAX_SOURCE_URL_LENGTH);
+  } catch {
+    return "";
+  }
+};
+
+const getSafeErrorMessage = (fallback = "요청을 처리하지 못했습니다. 권한과 네트워크 상태를 확인하세요.") =>
+  fallback;
+
+const getFileExtension = (file) => file.name.split(".").pop()?.toLowerCase() ?? "";
+
+const isAllowedReviewImageFile = (file) =>
+  ALLOWED_REVIEW_IMAGE_TYPES.has(file.type) ||
+  (!file.type && ALLOWED_REVIEW_IMAGE_EXTENSIONS.has(getFileExtension(file)));
+
+const getReviewFileValidationError = (file) => {
+  if (!file) {
+    return "파일을 확인할 수 없습니다.";
+  }
+
+  if (file.size <= 0) {
+    return "비어 있는 파일은 업로드할 수 없습니다.";
+  }
+
+  if (file.size > MAX_REVIEW_UPLOAD_SIZE_BYTES) {
+    return "이미지는 5MB 이하만 업로드할 수 있습니다.";
+  }
+
+  if (!isAllowedReviewImageFile(file)) {
+    return "JPG, PNG, WebP, HEIC 이미지만 업로드할 수 있습니다.";
+  }
+
+  return "";
+};
+
+const getStoragePathFromPhotoReference = (value) => {
+  const rawValue = String(value ?? "").trim();
+
+  if (!rawValue) {
+    return "";
+  }
+
+  if (!/^https?:\/\//i.test(rawValue) && !rawValue.startsWith("/")) {
+    return rawValue;
+  }
+
+  try {
+    const url = new URL(rawValue);
+    const index = url.pathname.indexOf(REVIEW_PHOTO_PUBLIC_SEGMENT);
+
+    if (index === -1) {
+      return "";
+    }
+
+    return decodeURIComponent(url.pathname.slice(index + REVIEW_PHOTO_PUBLIC_SEGMENT.length));
+  } catch {
+    return "";
+  }
+};
+
+const isExternalLegacyPhotoUrl = (value) => {
+  const rawValue = String(value ?? "").trim();
+  return /^https?:\/\//i.test(rawValue) && !getStoragePathFromPhotoReference(rawValue);
+};
+
+const hashFileSha256 = async (file) => {
+  if (!crypto?.subtle) {
+    return "";
+  }
+
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
 
 const getInitialForm = () => ({
   author: "",
@@ -406,9 +531,9 @@ const analyzeReviewUpload = async (file) => {
 };
 
 const getSafeImageExtension = (file) => {
-  const extension = file.name.split(".").pop()?.toLowerCase();
+  const extension = getFileExtension(file);
 
-  if (["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(extension)) {
+  if (ALLOWED_REVIEW_IMAGE_EXTENSIONS.has(extension)) {
     return extension;
   }
 
@@ -513,6 +638,8 @@ export default function Admin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [listStatus, setListStatus] = useState("");
+  const [lastSignInAttemptAt, setLastSignInAttemptAt] = useState(0);
+  const [lastReviewSubmitAt, setLastReviewSubmitAt] = useState(0);
 
   const userEmail = session?.user?.email ?? "";
   const canManageReviews = Boolean(session && adminStatus.isAdmin);
@@ -556,24 +683,85 @@ export default function Admin() {
     };
   }, [photoFiles]);
 
+  const createSignedReviewPhotoUrls = async (review) => {
+    const bucket = supabase.storage.from(REVIEW_PHOTO_BUCKET);
+    const storedPaths = [
+      ...(Array.isArray(review.image_paths) ? review.image_paths : []),
+      ...(Array.isArray(review.image_urls)
+        ? review.image_urls.map(getStoragePathFromPhotoReference).filter(Boolean)
+        : []),
+    ];
+    const uniquePaths = Array.from(new Set(storedPaths)).slice(0, MAX_REVIEW_PHOTOS);
+    const signedUrls = [];
+
+    for (const path of uniquePaths) {
+      const { data, error } = await bucket.createSignedUrl(
+        path,
+        SIGNED_REVIEW_PHOTO_EXPIRES_IN_SECONDS,
+      );
+
+      if (!error && data?.signedUrl) {
+        signedUrls.push(data.signedUrl);
+      }
+    }
+
+    const legacyExternalUrls = Array.isArray(review.image_urls)
+      ? review.image_urls.filter(isExternalLegacyPhotoUrl)
+      : [];
+
+    return [...signedUrls, ...legacyExternalUrls].slice(0, MAX_REVIEW_PHOTOS);
+  };
+
+  const hydrateReviewPhotoUrls = async (reviewRows = []) =>
+    Promise.all(
+      reviewRows.map(async (review) => ({
+        ...review,
+        display_image_urls: await createSignedReviewPhotoUrls(review),
+      })),
+    );
+
+  const recordAuditLog = async (action, metadata = {}, reviewId = null) => {
+    if (!session?.user?.id) {
+      return "감사 로그를 기록할 관리자 세션을 확인할 수 없습니다.";
+    }
+
+    const { error } = await supabase.from("homepage_review_audit_logs").insert({
+      action,
+      review_id: reviewId,
+      actor_user_id: session.user.id,
+      metadata,
+    });
+
+    if (error) {
+      return "감사 로그 기록을 확인해야 합니다.";
+    }
+
+    return "";
+  };
+
   const loadAdminReviews = async () => {
     setListStatus("리뷰 목록을 불러오는 중입니다.");
 
     const { data, error } = await supabase
       .from("homepage_reviews")
       .select(
-        "id, author, label, text, time, rating, is_published, created_at, image_urls, source_url",
+        "id, author, label, text, time, rating, is_published, created_at, image_urls, image_paths, image_hashes, source_url",
       )
       .order("created_at", { ascending: false })
       .limit(50);
 
     if (error) {
-      setListStatus(`목록을 불러오지 못했습니다: ${error.message}`);
+      setListStatus(getSafeErrorMessage("목록을 불러오지 못했습니다. 관리자 권한과 네트워크 상태를 확인하세요."));
       return;
     }
 
-    setReviews(data ?? []);
-    setListStatus("");
+    try {
+      setReviews(await hydrateReviewPhotoUrls(data ?? []));
+      setListStatus("");
+    } catch {
+      setReviews(data ?? []);
+      setListStatus("목록은 불러왔지만 일부 사진 서명 URL을 만들지 못했습니다.");
+    }
   };
 
   const checkAdminAccess = async () => {
@@ -585,7 +773,7 @@ export default function Admin() {
       setAdminStatus({
         isChecking: false,
         isAdmin: false,
-        error: `관리자 권한 확인 실패: ${error.message}`,
+        error: "관리자 권한을 확인하지 못했습니다. 로그인 상태와 네트워크를 확인하세요.",
       });
       return;
     }
@@ -613,23 +801,41 @@ export default function Admin() {
 
   const handleAuthFieldChange = (event) => {
     const { name, value } = event.target;
-    setAuthForm((current) => ({ ...current, [name]: value }));
+    setAuthForm((current) => ({
+      ...current,
+      [name]: name === "email" ? sanitizeSingleLine(value, 120) : value,
+    }));
   };
 
   const handleSignIn = async (event) => {
     event.preventDefault();
+
+    const email = sanitizeSingleLine(authForm.email, 120);
+    const now = Date.now();
+
+    if (!isValidEmail(email)) {
+      setAuthStatus("이메일 형식을 확인하세요.");
+      return;
+    }
+
+    if (now - lastSignInAttemptAt < MIN_SIGN_IN_INTERVAL_MS) {
+      setAuthStatus("잠시 후 다시 시도하세요.");
+      return;
+    }
+
+    setLastSignInAttemptAt(now);
     setIsSigningIn(true);
     setAuthStatus("");
 
     const { error } = await supabase.auth.signInWithPassword({
-      email: authForm.email.trim(),
+      email,
       password: authForm.password,
     });
 
     setIsSigningIn(false);
 
     if (error) {
-      setAuthStatus(`로그인 실패: ${error.message}`);
+      setAuthStatus("로그인 실패: 이메일 또는 비밀번호를 확인하세요.");
       return;
     }
 
@@ -644,24 +850,52 @@ export default function Admin() {
 
   const handleFormChange = (event) => {
     const { checked, name, type, value } = event.target;
+    const nextValue =
+      name === "text"
+        ? sanitizeReviewText(value)
+        : name === "sourceUrl"
+          ? sanitizeSingleLine(value, MAX_SOURCE_URL_LENGTH)
+          : name === "author"
+            ? sanitizeSingleLine(value, MAX_REVIEW_AUTHOR_LENGTH)
+            : name === "time"
+              ? sanitizeSingleLine(value, MAX_REVIEW_TIME_LENGTH)
+              : value;
 
     setForm((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : nextValue,
     }));
   };
 
   const handleUnifiedReviewImageChange = async (event) => {
-    const selectedFiles = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.startsWith("image/"),
-    );
+    const rawFiles = Array.from(event.target.files ?? []).slice(0, MAX_REVIEW_UPLOAD_INPUT_FILES);
+    const rejectedMessages = [];
+    const selectedFiles = rawFiles.filter((file) => {
+      const validationError = getReviewFileValidationError(file);
+
+      if (validationError) {
+        rejectedMessages.push(`${file.name}: ${validationError}`);
+        return false;
+      }
+
+      return true;
+    });
 
     if (selectedFiles.length === 0) {
+      if (rejectedMessages.length > 0) {
+        setSubmitStatus(rejectedMessages.slice(0, 2).join(" "));
+      }
+
+      event.target.value = "";
       return;
     }
 
     setOcrText("");
-    setSubmitStatus(`${selectedFiles.length}개 이미지에서 리뷰와 사진 후보를 분석하는 중입니다.`);
+    setSubmitStatus(
+      `${selectedFiles.length}개 이미지에서 리뷰와 사진 후보를 분석하는 중입니다.${
+        rejectedMessages.length > 0 ? ` 제외된 파일 ${rejectedMessages.length}개.` : ""
+      }`,
+    );
 
     const uploadResults = await Promise.all(selectedFiles.map(analyzeReviewUpload));
     const nextOcrFiles = uploadResults.flatMap((result) => (result.ocrFile ? [result.ocrFile] : []));
@@ -696,31 +930,36 @@ export default function Admin() {
 
   const uploadReviewPhotos = async () => {
     if (photoFiles.length === 0) {
-      return [];
+      return { imagePaths: [], imageHashes: [] };
     }
 
     const bucket = supabase.storage.from(REVIEW_PHOTO_BUCKET);
-    const uploadedUrls = [];
+    const imagePaths = [];
+    const imageHashes = [];
 
     for (const [index, file] of photoFiles.entries()) {
+      const validationError = getReviewFileValidationError(file);
+
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
       const path = getUploadPath(session.user.id, file, index);
       const { error } = await bucket.upload(path, file, {
-        cacheControl: "31536000",
+        cacheControl: "3600",
+        contentType: file.type || "image/jpeg",
         upsert: false,
       });
 
       if (error) {
-        throw new Error(`사진 업로드 실패: ${error.message}`);
+        throw new Error("사진 업로드에 실패했습니다.");
       }
 
-      const {
-        data: { publicUrl },
-      } = bucket.getPublicUrl(path);
-
-      uploadedUrls.push(publicUrl);
+      imagePaths.push(path);
+      imageHashes.push(await hashFileSha256(file));
     }
 
-    return uploadedUrls;
+    return { imagePaths, imageHashes };
   };
 
   const handleReadOcr = async (selectedInput = ocrFiles) => {
@@ -786,8 +1025,8 @@ export default function Admin() {
           ? "OCR 읽기와 자동 정제가 완료되었습니다. 내용을 확인하고 저장하세요."
           : "촬영본 OCR 품질이 낮아 비공개로 전환했습니다. 실제 리뷰 문구를 직접 확인해서 수정한 뒤 공개하세요.",
       );
-    } catch (error) {
-      setOcrStatus(`OCR 실패: ${error.message}`);
+    } catch {
+      setOcrStatus("OCR 실패: 이미지 형식과 글자 선명도를 확인하세요.");
     } finally {
       if (worker) {
         await worker.terminate();
@@ -815,77 +1054,132 @@ export default function Admin() {
 
   const handleSubmitReview = async (event) => {
     event.preventDefault();
+    const now = Date.now();
 
     if (!canManageReviews) {
       setSubmitStatus("관리자 권한 확인 후 저장할 수 있습니다.");
       return;
     }
 
-    if (!form.text.trim()) {
+    if (now - lastReviewSubmitAt < MIN_REVIEW_SUBMIT_INTERVAL_MS) {
+      setSubmitStatus("잠시 후 다시 저장하세요.");
+      return;
+    }
+
+    const author = sanitizeSingleLine(form.author, MAX_REVIEW_AUTHOR_LENGTH);
+    const reviewText = sanitizeReviewText(form.text);
+    const reviewTime = sanitizeSingleLine(form.time, MAX_REVIEW_TIME_LENGTH);
+    const sourceUrl = normalizeSourceUrl(form.sourceUrl) || siteInfo.naverPlaceUrl;
+
+    if (!reviewText) {
       setSubmitStatus("리뷰 내용을 입력하거나 OCR로 읽어온 뒤 확인하세요.");
       return;
     }
 
-    if (!form.author.trim()) {
+    if (!author) {
       setSubmitStatus("작성자 아이디를 확인하세요. 캡처에서 못 읽은 경우 직접 입력해야 합니다.");
       return;
     }
 
-    if (form.isPublished && !isPublishableReview({ author: form.author, text: form.text })) {
+    if (form.sourceUrl.trim() && !normalizeSourceUrl(form.sourceUrl)) {
+      setSubmitStatus("출처 URL은 http 또는 https 주소만 입력할 수 있습니다.");
+      return;
+    }
+
+    if (form.isPublished && !isPublishableReview({ author, text: reviewText })) {
       setSubmitStatus(
         "OCR 품질이 낮거나 작성자/본문이 불완전합니다. 실제 리뷰 문구를 수정하거나 비공개로 저장하세요.",
       );
       return;
     }
 
+    setLastReviewSubmitAt(now);
     setIsSubmitting(true);
     setSubmitStatus("사진을 업로드하고 리뷰를 저장하는 중입니다.");
 
     try {
       const rating = Number(form.rating);
-      const imageUrls = await uploadReviewPhotos();
-      const { error } = await supabase.from("homepage_reviews").insert({
-        author: maskReviewAuthor(form.author.trim()),
-        label: makeStarLabel(rating),
-        text: form.text.trim(),
-        time: form.time || null,
-        rating,
-        source_type: "naver",
-        source_url: form.sourceUrl.trim() || siteInfo.naverPlaceUrl,
-        image_urls: imageUrls,
-        is_published: form.isPublished,
-      });
+      const { imagePaths, imageHashes } = await uploadReviewPhotos();
+
+      const photoAuditWarning =
+        imagePaths.length > 0
+          ? await recordAuditLog("review_photo_upload", { image_count: imagePaths.length })
+          : "";
+
+      const { data, error } = await supabase
+        .from("homepage_reviews")
+        .insert({
+          author: maskReviewAuthor(author),
+          label: makeStarLabel(rating),
+          text: reviewText,
+          time: reviewTime || null,
+          rating,
+          source_type: "naver",
+          source_url: sourceUrl,
+          image_paths: imagePaths,
+          image_hashes: imageHashes,
+          image_urls: [],
+          is_published: form.isPublished,
+        })
+        .select("id")
+        .single();
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error("리뷰 저장에 실패했습니다.");
       }
 
-      setSubmitStatus("저장 완료. 공개 상태면 홈페이지 리뷰 슬라이드에 반영됩니다.");
+      const createAuditWarning = await recordAuditLog(
+        "review_create",
+        {
+          is_published: form.isPublished,
+          image_count: imagePaths.length,
+          has_source_url: Boolean(sourceUrl),
+        },
+        data?.id ?? null,
+      );
+
       resetForm();
+      setSubmitStatus(
+        photoAuditWarning || createAuditWarning
+          ? `저장 완료. ${photoAuditWarning || createAuditWarning}`
+          : "저장 완료. 공개 가능 데이터로 보관되었습니다.",
+      );
       await loadAdminReviews();
     } catch (error) {
-      setSubmitStatus(error.message);
+      const message = error instanceof Error ? String(error).replace(/^Error:\s*/, "") : "";
+      setSubmitStatus(getSafeErrorMessage(message || "저장에 실패했습니다."));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleTogglePublished = async (review) => {
+    const nextPublished = !review.is_published;
     const { error } = await supabase
       .from("homepage_reviews")
-      .update({ is_published: !review.is_published })
+      .update({ is_published: nextPublished })
       .eq("id", review.id);
 
     if (error) {
-      setListStatus(`공개 상태 변경 실패: ${error.message}`);
+      setListStatus("공개 상태를 변경하지 못했습니다. 관리자 권한을 확인하세요.");
       return;
     }
 
+    const auditWarning = await recordAuditLog(
+      "review_publish_toggle",
+      { is_published: nextPublished },
+      review.id,
+    );
+
     await loadAdminReviews();
+
+    if (auditWarning) {
+      setListStatus(`공개 상태는 변경됐지만 ${auditWarning}`);
+    }
   };
 
   const handleDeleteReview = async (review) => {
-    const confirmed = window.confirm("이 리뷰를 삭제할까요? 홈페이지에서도 사라집니다.");
+    const confirmed = window.confirm("이 리뷰를 삭제할까요? 저장된 사진 파일은 삭제하지 않고 보존됩니다.");
 
     if (!confirmed) {
       return;
@@ -894,11 +1188,26 @@ export default function Admin() {
     const { error } = await supabase.from("homepage_reviews").delete().eq("id", review.id);
 
     if (error) {
-      setListStatus(`삭제 실패: ${error.message}`);
+      setListStatus("삭제하지 못했습니다. 관리자 권한을 확인하세요.");
       return;
     }
 
+    const auditWarning = await recordAuditLog(
+      "review_delete",
+      {
+        was_published: Boolean(review.is_published),
+        image_count:
+          (Array.isArray(review.image_paths) ? review.image_paths.length : 0) +
+          (Array.isArray(review.image_urls) ? review.image_urls.length : 0),
+      },
+      review.id,
+    );
+
     await loadAdminReviews();
+
+    if (auditWarning) {
+      setListStatus(`리뷰는 삭제됐지만 ${auditWarning}`);
+    }
   };
 
   if (!isSupabaseConfigured) {
@@ -908,7 +1217,12 @@ export default function Admin() {
           <div className="admin-card">
             <h1>Supabase 설정 필요</h1>
             <p>
-              관리자 앱을 사용하려면 `VITE_SUPABASE_URL`과 `VITE_SUPABASE_ANON_KEY`가 필요합니다.
+              관리자 앱을 사용하려면 형식이 올바른 `VITE_SUPABASE_URL`과
+              `VITE_SUPABASE_ANON_KEY`가 필요합니다.
+            </p>
+            <p>
+              URL 설정: {supabaseConfigStatus.isValidUrl ? "확인됨" : "확인 필요"} / 공개 키
+              설정: {supabaseConfigStatus.isPublishableKey ? "확인됨" : "확인 필요"}
             </p>
           </div>
         </div>
@@ -924,8 +1238,8 @@ export default function Admin() {
             <p className="section-eyebrow">Review Admin</p>
             <h1 id="admin-title">리뷰 관리자 앱</h1>
             <p>
-              네이버 리뷰 캡처를 OCR로 읽고, 리뷰 사진을 함께 올린 뒤 홈페이지 슬라이드에
-              반영합니다.
+              네이버 리뷰 캡처를 OCR로 읽고 리뷰 사진을 private storage에 보관합니다. 현재
+              고객 화면에는 자동 노출하지 않습니다.
             </p>
           </div>
           <a className="admin-secondary-button" href="#home">
@@ -964,6 +1278,7 @@ export default function Admin() {
                     <label>
                       작성자 표시명
                       <input
+                        maxLength={MAX_REVIEW_AUTHOR_LENGTH}
                         name="author"
                         placeholder="예: 하늘**48"
                         value={form.author}
@@ -985,6 +1300,7 @@ export default function Admin() {
                       <label>
                         리뷰 날짜
                         <input
+                          maxLength={MAX_REVIEW_TIME_LENGTH}
                           name="time"
                           placeholder="예: 5.3.일"
                           value={form.time}
@@ -996,7 +1312,9 @@ export default function Admin() {
                       출처 URL
                       <input
                         inputMode="url"
+                        maxLength={MAX_SOURCE_URL_LENGTH}
                         name="sourceUrl"
+                        type="url"
                         value={form.sourceUrl}
                         onChange={handleFormChange}
                       />
@@ -1005,6 +1323,7 @@ export default function Admin() {
                       리뷰 문구
                       <textarea
                         name="text"
+                        maxLength={MAX_REVIEW_TEXT_LENGTH}
                         rows="7"
                         value={form.text}
                         onChange={handleFormChange}
@@ -1019,7 +1338,7 @@ export default function Admin() {
                         type="checkbox"
                         onChange={handleFormChange}
                       />
-                      저장 즉시 홈페이지에 공개
+                      공개 가능 데이터로 표시
                     </label>
                   </div>
 
@@ -1033,7 +1352,7 @@ export default function Admin() {
                     <label>
                       캡처/사진 여러 장 선택
                       <input
-                        accept="image/*"
+                        accept={REVIEW_PHOTO_ACCEPT}
                         multiple
                         type="file"
                         onChange={handleUnifiedReviewImageChange}
@@ -1042,7 +1361,7 @@ export default function Admin() {
                     <label>
                       카메라로 촬영해서 추가
                       <input
-                        accept="image/*"
+                        accept={REVIEW_PHOTO_ACCEPT}
                         capture="environment"
                         type="file"
                         onChange={handleUnifiedReviewImageChange}
@@ -1117,9 +1436,10 @@ export default function Admin() {
                             <em>{review.is_published ? "공개" : "비공개"}</em>
                           </div>
                           <p>{review.text}</p>
-                          {Array.isArray(review.image_urls) && review.image_urls.length > 0 ? (
+                          {Array.isArray(review.display_image_urls) &&
+                          review.display_image_urls.length > 0 ? (
                             <div className="admin-review-photo-row">
-                              {review.image_urls.slice(0, 4).map((url) => (
+                              {review.display_image_urls.slice(0, 4).map((url) => (
                                 <img key={url} src={url} alt={`${review.author} 리뷰 사진`} />
                               ))}
                             </div>

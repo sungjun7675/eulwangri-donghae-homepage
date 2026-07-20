@@ -1,4 +1,4 @@
-const CACHE_NAME = "donghae-homepage-v4";
+const CACHE_NAME = "donghae-homepage-v5";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -33,9 +33,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const isNavigationRequest = request.mode === "navigate" || request.destination === "document";
+
+  if (isNavigationRequest) {
+    event.respondWith(fetch(request).catch(() => caches.match(self.registration.scope)));
+    return;
+  }
+
   event.respondWith(
     fetch(request)
       .then((response) => {
+        if (!response.ok || response.type !== "basic") {
+          return response;
+        }
+
         const copy = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
