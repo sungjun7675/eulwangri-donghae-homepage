@@ -231,9 +231,11 @@ const structuredData = read("src/components/common/StructuredData.jsx");
 check("React runtime has no dangerouslySetInnerHTML structured data", !structuredData.includes("dangerouslySetInnerHTML"));
 
 const serviceWorker = read("public/sw.js");
-check("service worker cache version is hardened", serviceWorker.includes("donghae-homepage-v6"));
+check("service worker cache version is hardened", serviceWorker.includes("donghae-homepage-v7"));
 check("service worker bypasses cross-origin requests", serviceWorker.includes("requestUrl.origin !== self.location.origin"));
 check("service worker does not cache navigation responses", serviceWorker.includes("isNavigationRequest"));
+check("service worker caches only explicit safe destinations", serviceWorker.includes('new Set(["font", "image"])'));
+check("service worker does not cache application scripts", !serviceWorker.includes("cache.put(request, copy)") || serviceWorker.includes("CACHEABLE_DESTINATIONS.has(request.destination)"));
 check("service worker caches only successful basic responses", serviceWorker.includes("!response.ok || response.type !== \"basic\""));
 
 const workflow = read(".github/workflows/deploy-pages.yml");

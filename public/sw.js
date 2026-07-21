@@ -1,12 +1,8 @@
-const CACHE_NAME = "donghae-homepage-v6";
+const CACHE_NAME = "donghae-homepage-v7";
+const CACHEABLE_DESTINATIONS = new Set(["font", "image"]);
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.add(self.registration.scope))
-      .finally(() => self.skipWaiting()),
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
@@ -36,7 +32,10 @@ self.addEventListener("fetch", (event) => {
   const isNavigationRequest = request.mode === "navigate" || request.destination === "document";
 
   if (isNavigationRequest) {
-    event.respondWith(fetch(request).catch(() => caches.match(self.registration.scope)));
+    return;
+  }
+
+  if (!CACHEABLE_DESTINATIONS.has(request.destination)) {
     return;
   }
 
