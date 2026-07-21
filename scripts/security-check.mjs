@@ -58,6 +58,10 @@ const packageJson = JSON.parse(read("package.json"));
 const gitignore = read(".gitignore");
 const vercelConfigPath = "vercel.json";
 const vercelConfig = existsSync(join(root, vercelConfigPath)) ? JSON.parse(read(vercelConfigPath)) : null;
+const manifest = JSON.parse(read("public/manifest.webmanifest"));
+const robotsTxt = read("public/robots.txt");
+const sitemapXml = read("public/sitemap.xml");
+const routeEntrypoints = read("scripts/create-route-entrypoints.mjs");
 const trackedFiles = getTrackedFiles();
 const sourceFiles = walkFiles(".").filter((file) =>
   /\.(js|jsx|mjs|html|yml|yaml|sql|json|txt|md|css)$/.test(file),
@@ -76,10 +80,14 @@ check(
   "HTTP header security script is registered",
   packageJson.scripts?.["security:headers"] === "node scripts/header-check.mjs",
 );
+check("commercial launch script is registered", packageJson.scripts?.["launch:check"] === "node scripts/launch-check.mjs");
 check(
   "static route entrypoint script is wired into build",
   packageJson.scripts?.build?.includes("scripts/create-route-entrypoints.mjs"),
 );
+check("static route entrypoint script injects route metadata", routeEntrypoints.includes("routeMeta"));
+check("static route entrypoint script injects canonical URL per route", routeEntrypoints.includes("getCanonicalUrl"));
+check("admin static route is marked noindex", routeEntrypoints.includes('robots: "noindex, noarchive"'));
 check(".env and .env.local are ignored", gitignore.includes(".env") && gitignore.includes(".env.local"));
 check(
   "only .env.example is tracked",
@@ -104,6 +112,8 @@ const app = read("src/App.jsx");
 const header = read("src/components/common/Header.jsx");
 const menuSection = read("src/components/sections/MenuSection.jsx");
 const gallerySection = read("src/components/sections/GallerySection.jsx");
+const reviewGuideSection = read("src/components/sections/ReviewGuideSection.jsx");
+const siteData = read("src/data/siteData.js");
 check("admin edge function client is isolated", adminReviewApi.includes("invokeAdminReviewAction"));
 check("admin edge function mode is feature-flagged", adminReviewApi.includes("VITE_USE_ADMIN_EDGE_FUNCTIONS"));
 check("admin mutations can use edge function boundary", admin.includes("invokeAdminReviewAction"));
@@ -125,6 +135,11 @@ check(
   "image position styling avoids inline style attributes",
   !menuSection.includes("style={{") && !gallerySection.includes("style={{"),
 );
+check("public review rendering requires commercial approval", reviewGuideSection.includes("isCommercialUseApproved === true"));
+check("commercial review policy is present", siteData.includes("commercialReviewPolicy"));
+check("commercial review fallback is rendered without copied review photos", reviewGuideSection.includes("public-review-safe-grid"));
+check("public review client data is empty until rights approval", /export const publicReviewItems = \[\];/.test(siteData));
+check("public review client data has no copied reviewer handles", !/하늘\*\*48|디고\*\*니7|lks\*\*\*\*|오와\*\*id/.test(siteData));
 
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
 const finalBoundaryMigration = "supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql";
@@ -201,6 +216,15 @@ check("CSP script-src avoids unsafe-inline", /script-src[^;]+/.test(csp) && !/sc
 check("CSP style-src avoids unsafe-inline", /style-src[^;]+/.test(csp) && !/style-src[^;]+'unsafe-inline'/.test(csp));
 check("CSP includes JSON-LD hash", jsonLdHash && csp.includes(jsonLdHash), jsonLdHash);
 check("strict referrer policy is present", indexHtml.includes('name="referrer" content="strict-origin-when-cross-origin"'));
+check("PWA manifest start_url uses deployed root", manifest.start_url === "/");
+check("PWA manifest scope uses deployed root", manifest.scope === "/");
+check("robots.txt blocks admin route", /Disallow:\s*\/admin\b/i.test(robotsTxt));
+check("sitemap excludes admin route", !sitemapXml.includes("/admin"));
+
+for (const route of ["/", "/menu", "/store", "/reviews", "/location", "/reservation"]) {
+  const loc = `https://eulwangri-donghae-homepage.vercel.app${route === "/" ? "/" : route}`;
+  check(`sitemap includes ${route}`, sitemapXml.includes(`<loc>${loc}</loc>`));
+}
 
 const getVercelHeader = (source, key) =>
   vercelConfig?.headers
@@ -209,6 +233,9 @@ const getVercelHeader = (source, key) =>
 const vercelGlobalCsp = getVercelHeader("/(.*)", "Content-Security-Policy");
 const vercelAdminCache = getVercelHeader("/admin", "Cache-Control");
 const vercelAdminSlashCache = getVercelHeader("/admin/", "Cache-Control");
+const vercelAdminRobots = getVercelHeader("/admin", "X-Robots-Tag");
+const vercelAdminSlashRobots = getVercelHeader("/admin/", "X-Robots-Tag");
+const vercelAdminWildcardRobots = getVercelHeader("/admin/:path*", "X-Robots-Tag");
 
 check("Vercel config exists", Boolean(vercelConfig));
 check("Vercel rewrites /admin to SPA entry", JSON.stringify(vercelConfig?.rewrites ?? []).includes("\"source\":\"/admin\""));
@@ -226,6 +253,20 @@ check(
 check("Vercel Permissions-Policy is configured", getVercelHeader("/(.*)", "Permissions-Policy").includes("microphone=()"));
 check("Vercel admin route is no-store", /no-store/i.test(vercelAdminCache));
 check("Vercel trailing-slash admin route is no-store", /no-store/i.test(vercelAdminSlashCache));
+check("Vercel admin route is noindex", /noindex/i.test(vercelAdminRobots) && /noarchive/i.test(vercelAdminRobots));
+check(
+  "Vercel trailing-slash admin route is noindex",
+  /noindex/i.test(vercelAdminSlashRobots) && /noarchive/i.test(vercelAdminSlashRobots),
+);
+check(
+  "Vercel nested admin routes are noindex",
+  /noindex/i.test(vercelAdminWildcardRobots) && /noarchive/i.test(vercelAdminWildcardRobots),
+);
+check("Vercel hashed assets are immutable cached", /immutable/i.test(getVercelHeader("/assets/:path*", "Cache-Control")));
+
+check("unused public og.png is absent", !existsSync(join(root, "public/og.png")));
+check("unused public og.jpg is absent", !existsSync(join(root, "public/og.jpg")));
+check("unused public og-hero-cinematic.png is absent", !existsSync(join(root, "public/og-hero-cinematic.png")));
 
 const structuredData = read("src/components/common/StructuredData.jsx");
 check("React runtime has no dangerouslySetInnerHTML structured data", !structuredData.includes("dangerouslySetInnerHTML"));
@@ -241,11 +282,13 @@ check("service worker caches only successful basic responses", serviceWorker.inc
 const workflow = read(".github/workflows/deploy-pages.yml");
 check("GitHub Pages workflow has least-privilege permissions", workflow.includes("contents: read") && workflow.includes("pages: write") && workflow.includes("id-token: write"));
 check("GitHub Pages workflow runs security check before build", workflow.includes("npm run security:check"));
+check("GitHub Pages workflow runs commercial launch check before build", workflow.includes("npm run launch:check"));
 check("GitHub Pages workflow runs Supabase boundary check", workflow.includes("npm run security:supabase"));
 check("GitHub Pages workflow passes edge-function feature flag", workflow.includes("VITE_USE_ADMIN_EDGE_FUNCTIONS"));
 
 const scheduledAudit = read(".github/workflows/security-audit.yml");
 check("scheduled security audit workflow exists", scheduledAudit.includes("Scheduled security audit"));
+check("scheduled security audit runs commercial launch check", scheduledAudit.includes("npm run launch:check"));
 check("scheduled security audit runs dependency audit", scheduledAudit.includes("npm audit --audit-level=moderate"));
 check("scheduled security audit runs production build", scheduledAudit.includes("npm run build"));
 

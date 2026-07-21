@@ -73,6 +73,7 @@ if (!/^https?:\/\//i.test(targetUrl)) {
   const adminUrl = getAdminUrl(targetUrl);
   const adminResponse = await fetch(adminUrl, { redirect: "follow" });
   const adminCacheControl = adminResponse.headers.get("cache-control") ?? "";
+  const adminRobotsTag = adminResponse.headers.get("x-robots-tag") ?? "";
 
   adminResponse.ok
     ? pass("admin URL is reachable")
@@ -81,9 +82,13 @@ if (!/^https?:\/\//i.test(targetUrl)) {
   /no-store/i.test(adminCacheControl)
     ? pass("admin response cache policy is no-store")
     : fail("admin response cache policy is no-store", adminCacheControl || "missing");
+  /noindex/i.test(adminRobotsTag) && /noarchive/i.test(adminRobotsTag)
+    ? pass("admin response is excluded from search indexing")
+    : fail("admin response is excluded from search indexing", adminRobotsTag || "missing");
 
   const adminSlashResponse = await fetch(getAdminSlashUrl(adminUrl), { redirect: "follow" });
   const adminSlashCacheControl = adminSlashResponse.headers.get("cache-control") ?? "";
+  const adminSlashRobotsTag = adminSlashResponse.headers.get("x-robots-tag") ?? "";
 
   adminSlashResponse.ok
     ? pass("admin trailing-slash URL is reachable")
@@ -91,6 +96,9 @@ if (!/^https?:\/\//i.test(targetUrl)) {
   /no-store/i.test(adminSlashCacheControl)
     ? pass("admin trailing-slash cache policy is no-store")
     : fail("admin trailing-slash cache policy is no-store", adminSlashCacheControl || "missing");
+  /noindex/i.test(adminSlashRobotsTag) && /noarchive/i.test(adminSlashRobotsTag)
+    ? pass("admin trailing-slash response is excluded from search indexing")
+    : fail("admin trailing-slash response is excluded from search indexing", adminSlashRobotsTag || "missing");
 }
 
 for (const result of results) {

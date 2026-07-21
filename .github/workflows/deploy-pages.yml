@@ -34,6 +34,9 @@ jobs:
       - name: Security check
         run: npm run security:check
 
+      - name: Commercial launch check
+        run: npm run launch:check
+
       - name: Supabase boundary check
         run: npm run security:supabase
         env:

@@ -1353,7 +1353,7 @@ export default function Admin() {
                       <input
                         maxLength={MAX_REVIEW_AUTHOR_LENGTH}
                         name="author"
-                        placeholder="예: 하늘**48"
+                        placeholder="예: 작성자**"
                         value={form.author}
                         onChange={handleFormChange}
                         required

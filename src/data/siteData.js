@@ -56,6 +56,26 @@ export const reviewSummary = {
   rank: "최신 상태는 네이버 플레이스에서 확인",
 };
 
+export const commercialReviewPolicy = {
+  heading: "상업 사용 허락이 확인된 리뷰만 노출합니다",
+  description:
+    "네이버 리뷰 원문, 작성자명, 방문 사진은 작성자 권리와 플랫폼 약관을 존중해 무단 복제하지 않습니다. 현재 공개 화면은 리뷰 수와 네이버 확인 링크 중심으로 운영합니다.",
+  items: [
+    {
+      label: "리뷰 원문",
+      value: "네이버 플레이스에서 직접 확인",
+    },
+    {
+      label: "리뷰 사진",
+      value: "직접 촬영했거나 사용 허락이 확인된 사진만 노출",
+    },
+    {
+      label: "자동 수집",
+      value: "네이버 약관 리스크가 있어 사용하지 않음",
+    },
+  ],
+};
+
 export const primaryActions = [
   {
     label: "전화 문의",
@@ -234,44 +254,7 @@ export const menuItems = [
   },
 ];
 
-export const publicReviewItems = [
-  {
-    author: "하늘**48",
-    rating: 5,
-    date: "5.3.일",
-    source: "네이버 방문자 리뷰 캡처 기반",
-    text: "치즈가리비랑 삼겹살 둘 다 맛있고 직원분들도 친절하다는 내용의 방문 리뷰입니다.",
-    tags: ["치즈가리비", "친절", "재방문"],
-    image: grilledScallopImage,
-  },
-  {
-    author: "디고**니7",
-    rating: 5,
-    date: "5.3.일",
-    source: "네이버 방문자 리뷰 캡처 기반",
-    text: "삼겹살 치즈가리비 세트를 먹고 맛과 친절한 응대를 함께 언급한 리뷰입니다.",
-    tags: ["세트 메뉴", "직원 응대", "만족"],
-    image: shrimpShellfishImage,
-  },
-  {
-    author: "lks****",
-    rating: 5,
-    date: "6.14.일",
-    source: "네이버 방문자 리뷰 캡처 기반",
-    text: "알찬 식전 음식부터 본 음식까지 만족스럽고 동행한 지인들도 만족했다는 리뷰입니다.",
-    tags: ["식전 음식", "모임", "만족"],
-    image: assortedShellfishImage,
-  },
-  {
-    author: "오와**id",
-    rating: 5,
-    date: "6.14.일",
-    source: "네이버 방문자 리뷰 캡처 기반",
-    text: "음식 궁합과 서비스를 좋게 평가하고 소문내고 싶다는 내용의 리뷰입니다.",
-    tags: ["서비스", "음식 궁합", "추천"],
-    image: sashimiImage,
-  },
-];
+export const publicReviewItems = [];
 
 export const galleryItems = [
   {
