@@ -1,6 +1,6 @@
 # 홈페이지 공개 운영 체크리스트
 
-이 문서는 GitHub Pages 배포 이후 계정 화면에서 직접 확인해야 하는 작업만 정리합니다.
+이 문서는 Vercel 운영 배포 이후 계정 화면에서 직접 확인해야 하는 작업만 정리합니다.
 
 ## 1. 네이버 서치어드바이저 등록
 
@@ -8,7 +8,7 @@
 2. 사이트 등록 URL에 아래 주소를 입력합니다.
 
 ```text
-https://sungjun7675.github.io/eulwangri-donghae-homepage/
+https://eulwangri-donghae-homepage.vercel.app/
 ```
 
 3. 소유 확인 방식은 `HTML 태그`가 가장 빠릅니다.
@@ -22,7 +22,7 @@ https://sungjun7675.github.io/eulwangri-donghae-homepage/
 6. 사이트맵 제출 메뉴에 아래 주소를 제출합니다.
 
 ```text
-https://sungjun7675.github.io/eulwangri-donghae-homepage/sitemap.xml
+https://eulwangri-donghae-homepage.vercel.app/sitemap.xml
 ```
 
 ## 2. 카카오톡/문자 공유 썸네일 확인
@@ -36,11 +36,11 @@ https://sungjun7675.github.io/eulwangri-donghae-homepage/sitemap.xml
 
 도메인을 구매한 뒤에만 진행합니다.
 
-1. GitHub 저장소 `Settings > Pages > Custom domain`에 도메인을 입력합니다.
+1. Vercel 프로젝트 `Settings > Domains`에 도메인을 입력합니다.
 2. 도메인 DNS에 `CNAME` 레코드를 추가합니다.
 
 ```text
-www 또는 원하는 서브도메인 -> sungjun7675.github.io
+www 또는 원하는 서브도메인 -> cname.vercel-dns.com
 ```
 
 3. 코드에서 아래 값들을 새 도메인으로 변경합니다.
@@ -52,7 +52,7 @@ public/sitemap.xml
 public/robots.txt
 ```
 
-4. GitHub Pages에서 `Enforce HTTPS`가 켜졌는지 확인합니다.
+4. Vercel에서 SSL 인증서가 발급됐는지 확인합니다.
 
 ## 4. 네이버 평점 표시 기준
 

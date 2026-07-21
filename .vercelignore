@@ -1,0 +1,10 @@
+.env
+.env.*
+.git
+.github
+*.log
+*.err
+docs
+supabase
+node_modules
+dist

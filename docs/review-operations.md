@@ -38,7 +38,7 @@ on conflict (email) do nothing;
 배포 후 아래 주소로 접속합니다.
 
 ```text
-https://sungjun7675.github.io/eulwangri-donghae-homepage/#admin
+https://eulwangri-donghae-homepage.vercel.app/admin
 ```
 
 폰에서는 브라우저 메뉴에서 홈 화면에 추가하면 앱처럼 열 수 있습니다.

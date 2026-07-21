@@ -7,6 +7,9 @@ import spicyRawFishImage from "../assets/images/menu/real-spicy-raw-fish-optimiz
 import sashimiImage from "../assets/images/review/real-sashimi-optimized.jpg";
 import storeImage from "../assets/images/store/real-store-night-optimized.jpg";
 
+const configuredSiteUrl = String(import.meta.env.VITE_SITE_URL || "").trim();
+const productionSiteUrl = configuredSiteUrl || "https://eulwangri-donghae-homepage.vercel.app/";
+
 export const assets = {
   heroImage,
   sashimiImage,
@@ -20,7 +23,7 @@ export const siteInfo = {
   headline: "을왕리 동해\n회조개구이",
   description:
     "신선한 조개와 회를 한 번에 즐기는 최고의 맛. 을왕리의 바다를 담아 정성껏 준비합니다.",
-  siteUrl: "https://sungjun7675.github.io/eulwangri-donghae-homepage/",
+  siteUrl: productionSiteUrl,
   address: "인천 영종구 을왕로 62",
   phone: "0507-1395-2840",
   businessHours: "네이버 플레이스에서 당일 영업 상태 확인",

@@ -1,33 +1,77 @@
 const targetUrl = process.argv[2] || process.env.SECURITY_HEADER_URL || "";
+const explicitAdminUrl = process.argv[3] || process.env.SECURITY_HEADER_ADMIN_URL || "";
 const results = [];
 
 const pass = (name) => results.push({ status: "PASS", name });
 const fail = (name, detail = "") => results.push({ status: "FAIL", name, detail });
 
+const getAdminUrl = (baseUrl) => {
+  if (/^https?:\/\//i.test(explicitAdminUrl)) {
+    return explicitAdminUrl;
+  }
+
+  const url = new URL(baseUrl);
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}/admin`.replace("//admin", "/admin");
+  url.search = "";
+  url.hash = "";
+  return url.href;
+};
+
+const checkCommonHeaders = (label, headers) => {
+  const csp = headers.get("content-security-policy") ?? "";
+
+  csp.includes("default-src")
+    ? pass(`${label} Content-Security-Policy header is present`)
+    : fail(`${label} Content-Security-Policy header is present`);
+  csp.includes("object-src 'none'")
+    ? pass(`${label} CSP blocks object embedding`)
+    : fail(`${label} CSP blocks object embedding`);
+  csp.includes("frame-ancestors 'none'")
+    ? pass(`${label} CSP blocks frame ancestors`)
+    : fail(`${label} CSP blocks frame ancestors`);
+  !/style-src[^;]+'unsafe-inline'/.test(csp)
+    ? pass(`${label} CSP blocks inline styles`)
+    : fail(`${label} CSP blocks inline styles`);
+  (headers.get("strict-transport-security") ?? "").toLowerCase().includes("includesubdomains")
+    ? pass(`${label} HSTS includeSubDomains is present`)
+    : fail(`${label} HSTS includeSubDomains is present`);
+  (headers.get("x-frame-options") ?? "").toLowerCase() === "deny"
+    ? pass(`${label} X-Frame-Options DENY is present`)
+    : fail(`${label} X-Frame-Options DENY is present`);
+  (headers.get("x-content-type-options") ?? "").toLowerCase() === "nosniff"
+    ? pass(`${label} X-Content-Type-Options nosniff is present`)
+    : fail(`${label} X-Content-Type-Options nosniff is present`);
+  (headers.get("referrer-policy") ?? "").toLowerCase() === "strict-origin-when-cross-origin"
+    ? pass(`${label} Referrer-Policy is strict`)
+    : fail(`${label} Referrer-Policy is strict`);
+  headers.has("permissions-policy")
+    ? pass(`${label} Permissions-Policy is present`)
+    : fail(`${label} Permissions-Policy is present`);
+};
+
 if (!/^https?:\/\//i.test(targetUrl)) {
   fail("target URL is provided", "SECURITY_HEADER_URL 또는 첫 번째 인수로 URL을 전달하세요.");
 } else {
   const response = await fetch(targetUrl, { redirect: "follow" });
-  const headers = response.headers;
-  const csp = headers.get("content-security-policy") ?? "";
-  const cacheControl = headers.get("cache-control") ?? "";
 
   response.ok ? pass("target URL is reachable") : fail("target URL is reachable", `status ${response.status}`);
-  csp.includes("default-src") ? pass("Content-Security-Policy header is present") : fail("Content-Security-Policy header is present");
-  csp.includes("object-src 'none'") ? pass("CSP blocks object embedding") : fail("CSP blocks object embedding");
-  (headers.get("x-frame-options") ?? "").toLowerCase() === "deny"
-    ? pass("X-Frame-Options DENY is present")
-    : fail("X-Frame-Options DENY is present");
-  (headers.get("x-content-type-options") ?? "").toLowerCase() === "nosniff"
-    ? pass("X-Content-Type-Options nosniff is present")
-    : fail("X-Content-Type-Options nosniff is present");
-  (headers.get("referrer-policy") ?? "").toLowerCase() === "strict-origin-when-cross-origin"
-    ? pass("Referrer-Policy is strict")
-    : fail("Referrer-Policy is strict");
-  headers.has("permissions-policy") ? pass("Permissions-Policy is present") : fail("Permissions-Policy is present");
-  /no-store|no-cache|max-age=0/i.test(cacheControl)
-    ? pass("sensitive response cache policy is restrictive")
-    : fail("sensitive response cache policy is restrictive", cacheControl || "missing");
+  checkCommonHeaders("public", response.headers);
+
+  const publicCacheControl = response.headers.get("cache-control") ?? "";
+  /no-store|no-cache|max-age=0|must-revalidate/i.test(publicCacheControl)
+    ? pass("public HTML cache policy is revalidation-based")
+    : fail("public HTML cache policy is revalidation-based", publicCacheControl || "missing");
+
+  const adminResponse = await fetch(getAdminUrl(targetUrl), { redirect: "follow" });
+  const adminCacheControl = adminResponse.headers.get("cache-control") ?? "";
+
+  adminResponse.ok
+    ? pass("admin URL is reachable")
+    : fail("admin URL is reachable", `status ${adminResponse.status}`);
+  checkCommonHeaders("admin", adminResponse.headers);
+  /no-store/i.test(adminCacheControl)
+    ? pass("admin response cache policy is no-store")
+    : fail("admin response cache policy is no-store", adminCacheControl || "missing");
 }
 
 for (const result of results) {

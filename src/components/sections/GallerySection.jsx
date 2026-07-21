@@ -1,5 +1,7 @@
 import { galleryItems } from "../../data/siteData.js";
 
+const getImagePositionClass = (position) => (position === "center 44%" ? "image-position-center-44" : "");
+
 export default function GallerySection() {
   return (
     <section className="gallery-section" aria-labelledby="gallery-title">
@@ -12,12 +14,11 @@ export default function GallerySection() {
           {galleryItems.map((item) => (
             <figure className="gallery-card" key={item.name}>
               <img
-                className="gallery-tile"
+                className={`gallery-tile ${getImagePositionClass(item.imagePosition)}`.trim()}
                 src={item.image}
                 alt={item.alt}
                 loading="lazy"
                 decoding="async"
-                style={{ objectPosition: item.imagePosition }}
               />
               <figcaption>
                 <strong>{item.name}</strong>

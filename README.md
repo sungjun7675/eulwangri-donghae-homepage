@@ -17,6 +17,7 @@ Create `.env.local` from `.env.example` and fill only browser-safe values.
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_USE_ADMIN_EDGE_FUNCTIONS=false
+VITE_SITE_URL=https://eulwangri-donghae-homepage.vercel.app/
 ```
 
 Do not place a Supabase `service_role` key in this frontend project.
@@ -54,15 +55,51 @@ docs/security-hardening.md
 The hidden mobile admin app is available after deployment at:
 
 ```text
-https://sungjun7675.github.io/eulwangri-donghae-homepage/#admin
+https://eulwangri-donghae-homepage.vercel.app/admin
 ```
 
-It uses Supabase Auth, RLS, and the private `review-photos` storage bucket created by the security migrations. Keep using only the browser-safe anon key in GitHub secrets.
+The legacy hash route still works for old bookmarks:
+
+```text
+https://eulwangri-donghae-homepage.vercel.app/#admin
+```
+
+Use `/admin` as the canonical admin URL on Vercel so the server can apply `Cache-Control: no-store`.
+
+It uses Supabase Auth, RLS, and the private `review-photos` storage bucket created by the security migrations. Keep using only the browser-safe anon key in deployment secrets.
 
 For the highest security boundary, deploy `supabase/functions/admin-review` and set:
 
 ```text
 VITE_USE_ADMIN_EDGE_FUNCTIONS=true
+```
+
+## Vercel deployment
+
+The repository includes `vercel.json` for Vite routing, SPA rewrites, and production HTTP security headers.
+
+Vercel environment variables:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+VITE_USE_ADMIN_EDGE_FUNCTIONS=true
+VITE_SITE_URL=https://eulwangri-donghae-homepage.vercel.app/
+```
+
+Build settings:
+
+```text
+Framework Preset: Vite
+Install Command: npm ci
+Build Command: npm run build
+Output Directory: dist
+```
+
+After Vercel deploys, verify HTTP response headers:
+
+```bash
+npm run security:headers -- https://eulwangri-donghae-homepage.vercel.app/
 ```
 
 The manual GitHub workflow `Deploy Supabase security boundary` can apply the Supabase migrations
@@ -74,6 +111,9 @@ SUPABASE_DB_URL
 ```
 
 ## GitHub Pages deployment
+
+GitHub Pages remains available as a fallback deployment, but it cannot set custom HTTP response headers.
+Use Vercel as production when the security header score matters.
 
 The repository includes `.github/workflows/deploy-pages.yml`.
 

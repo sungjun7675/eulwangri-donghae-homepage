@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { siteInfo } from "../data/siteData.js";
 import { invokeAdminReviewAction, isAdminEdgeFunctionsEnabled } from "../lib/adminReviewApi.js";
+import { getPageHref } from "../lib/routes.js";
 import { isSupabaseConfigured, supabase, supabaseConfigStatus } from "../lib/supabaseClient.js";
 import {
   extractReviewMetadata,
@@ -1310,7 +1311,7 @@ export default function Admin() {
               고객 화면에는 자동 노출하지 않습니다.
             </p>
           </div>
-          <a className="admin-secondary-button" href="#home">
+          <a className="admin-secondary-button" href={getPageHref("home")}>
             홈페이지 보기
           </a>
         </div>

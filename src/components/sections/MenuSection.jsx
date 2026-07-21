@@ -1,5 +1,7 @@
 import { menuItems } from "../../data/siteData.js";
 
+const getImagePositionClass = (position) => (position === "center 44%" ? "image-position-center-44" : "");
+
 export default function MenuSection({ variant = "compact" }) {
   const isFull = variant === "full";
 
@@ -25,11 +27,11 @@ export default function MenuSection({ variant = "compact" }) {
               <article className="menu-detail-item" key={item.name}>
                 <div className="menu-detail-image">
                   <img
+                    className={getImagePositionClass(item.imagePosition)}
                     src={item.image}
                     alt={item.alt}
                     loading="lazy"
                     decoding="async"
-                    style={{ objectPosition: item.imagePosition }}
                   />
                 </div>
                 <div className="menu-detail-copy">
@@ -48,11 +50,11 @@ export default function MenuSection({ variant = "compact" }) {
             <article className="menu-item" key={item.name}>
               <div className="menu-thumb">
                 <img
+                  className={getImagePositionClass(item.imagePosition)}
                   src={item.image}
                   alt={item.alt}
                   loading="lazy"
                   decoding="async"
-                  style={{ objectPosition: item.imagePosition }}
                 />
               </div>
               <h3>{item.name}</h3>

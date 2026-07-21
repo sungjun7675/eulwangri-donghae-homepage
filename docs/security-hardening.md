@@ -2,7 +2,7 @@
 
 ## 현재 보안 경계
 
-- 배포: GitHub Pages 정적 배포
+- 배포: Vercel 정적 배포 권장, GitHub Pages fallback 유지
 - 앱: Vite React SPA
 - 관리자 인증: Supabase Auth
 - 관리자 권한: `homepage_admins` RLS + `is_homepage_admin()` 함수
@@ -45,7 +45,7 @@ supabase/functions/admin-review/index.ts
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-ALLOWED_ADMIN_ORIGINS=https://sungjun7675.github.io
+ALLOWED_ADMIN_ORIGINS=https://eulwangri-donghae-homepage.vercel.app,https://sungjun7675.github.io,http://127.0.0.1:4175
 ```
 
 배포 후 GitHub Actions secret 또는 로컬 환경변수에 아래 값을 설정하면 관리자 앱이 Edge Function 경계를 사용합니다.
@@ -71,29 +71,40 @@ SUPABASE_DB_URL
 
 `SUPABASE_DB_URL`은 Supabase Database connection string이며 GitHub 로그에 출력하지 않습니다.
 
-## GitHub Pages 보안 헤더 한계
+## Vercel 보안 헤더 기준
 
-GitHub Pages는 프로젝트에서 임의 HTTP response header를 직접 설정할 수 없습니다.
+Vercel 운영 배포는 `vercel.json`에서 HTTP response header를 직접 적용합니다.
 
-현재 코드에서 적용한 대체/보강:
+적용 기준:
 
-- `index.html` CSP meta
-- `referrer` meta
-- 서비스워커 navigation 캐시 회피
-- Supabase 응답은 cross-origin이라 서비스워커 캐시에 저장하지 않음
+- `Content-Security-Policy` response header
+- `frame-ancestors 'none'`
+- `style-src 'self'`로 inline style 차단
+- `Strict-Transport-Security`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy`
+- `/admin` 전용 `Cache-Control: no-store`
 
-아래 항목은 도메인 앞단에 Cloudflare, Netlify, Vercel, Nginx 같은 프록시를 붙일 때 HTTP header로 적용해야 합니다.
+관리자 페이지는 Vercel에서 아래 실제 경로를 사용합니다.
 
 ```text
-Content-Security-Policy
+https://eulwangri-donghae-homepage.vercel.app/admin
+```
+
+GitHub Pages fallback은 계속 동작하지만, 임의 HTTP response header를 직접 설정할 수 없으므로 아래 항목은 Vercel에서만 완전 검증됩니다.
+
+```text
+Content-Security-Policy response header
 X-Frame-Options: DENY
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: camera=(), microphone=(), geolocation=()
-Cache-Control: no-store
+Permissions-Policy
+Cache-Control: no-store on /admin
 ```
 
-단, 관리자 앱에서 카메라 업로드를 계속 사용할 경우 `Permissions-Policy`의 `camera`는 관리자 경로 정책과 함께 별도 설계가 필요합니다.
+관리자 앱의 촬영 업로드를 유지하기 위해 `Permissions-Policy`는 `camera=(self)`로 둡니다.
 
 ## 검증 명령어
 
@@ -107,7 +118,7 @@ npm run build
 실제 HTTP header 앞단을 붙인 뒤에는 아래 명령으로 확인합니다.
 
 ```bash
-npm run security:headers -- https://your-production-domain.example
+npm run security:headers -- https://eulwangri-donghae-homepage.vercel.app/
 ```
 
 ## 100점 전환 체크리스트
@@ -117,7 +128,7 @@ npm run security:headers -- https://your-production-domain.example
 - 또는 `Deploy Supabase security boundary` GitHub workflow로 위 두 작업 실행
 - `VITE_USE_ADMIN_EDGE_FUNCTIONS=true`로 관리자 변경 작업을 서버 경계로 전환
 - `SUPABASE_SECURITY_TEST_EDGE=true`와 관리자 테스트 계정 환경변수로 운영 검증 실행
-- GitHub Pages 앞단에 Cloudflare/Vercel/Netlify를 붙여 HTTP 보안 header를 실제 response header로 적용
+- Vercel production URL에서 `npm run security:headers` PASS 확인
 - Supabase Auth에서 관리자 계정 MFA 적용
 - GitHub 저장소 branch protection 설정
 - 정기 보안 감사 workflow 실패 알림 확인

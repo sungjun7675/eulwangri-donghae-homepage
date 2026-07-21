@@ -56,6 +56,8 @@ const getJsonLdHash = (html) => {
 
 const packageJson = JSON.parse(read("package.json"));
 const gitignore = read(".gitignore");
+const vercelConfigPath = "vercel.json";
+const vercelConfig = existsSync(join(root, vercelConfigPath)) ? JSON.parse(read(vercelConfigPath)) : null;
 const trackedFiles = getTrackedFiles();
 const sourceFiles = walkFiles(".").filter((file) =>
   /\.(js|jsx|mjs|html|yml|yaml|sql|json|txt|md|css)$/.test(file),
@@ -94,6 +96,10 @@ check("Supabase client rejects service_role-like keys", supabaseClient.includes(
 
 const admin = read("src/pages/Admin.jsx");
 const adminReviewApi = read("src/lib/adminReviewApi.js");
+const app = read("src/App.jsx");
+const header = read("src/components/common/Header.jsx");
+const menuSection = read("src/components/sections/MenuSection.jsx");
+const gallerySection = read("src/components/sections/GallerySection.jsx");
 check("admin edge function client is isolated", adminReviewApi.includes("invokeAdminReviewAction"));
 check("admin edge function mode is feature-flagged", adminReviewApi.includes("VITE_USE_ADMIN_EDGE_FUNCTIONS"));
 check("admin mutations can use edge function boundary", admin.includes("invokeAdminReviewAction"));
@@ -108,6 +114,12 @@ check("admin form applies local submit throttling", admin.includes("MIN_REVIEW_S
 check(
   "admin delete copy reflects private storage deletion",
   admin.includes("private storage에 저장된 리뷰 사진 파일도 함께 삭제됩니다"),
+);
+check("app supports path-based admin routing", app.includes("normalizeLegacyHashRoute") && app.includes("popstate"));
+check("header uses route helper links", header.includes("getPageHref"));
+check(
+  "image position styling avoids inline style attributes",
+  !menuSection.includes("style={{") && !gallerySection.includes("style={{"),
 );
 
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
@@ -177,14 +189,38 @@ check("CSP blocks object embedding", csp.includes("object-src 'none'"));
 check("CSP blocks framing via frame-src", csp.includes("frame-src 'none'"));
 check("CSP limits connect-src to self and Supabase", csp.includes("connect-src 'self' https://*.supabase.co wss://*.supabase.co"));
 check("CSP script-src avoids unsafe-inline", /script-src[^;]+/.test(csp) && !/script-src[^;]+'unsafe-inline'/.test(csp));
+check("CSP style-src avoids unsafe-inline", /style-src[^;]+/.test(csp) && !/style-src[^;]+'unsafe-inline'/.test(csp));
 check("CSP includes JSON-LD hash", jsonLdHash && csp.includes(jsonLdHash), jsonLdHash);
 check("strict referrer policy is present", indexHtml.includes('name="referrer" content="strict-origin-when-cross-origin"'));
+
+const getVercelHeader = (source, key) =>
+  vercelConfig?.headers
+    ?.find((entry) => entry.source === source)
+    ?.headers?.find((headerEntry) => headerEntry.key.toLowerCase() === key.toLowerCase())?.value ?? "";
+const vercelGlobalCsp = getVercelHeader("/(.*)", "Content-Security-Policy");
+const vercelAdminCache = getVercelHeader("/admin", "Cache-Control");
+
+check("Vercel config exists", Boolean(vercelConfig));
+check("Vercel rewrites /admin to SPA entry", JSON.stringify(vercelConfig?.rewrites ?? []).includes("\"source\":\"/admin\""));
+check("Vercel CSP header is configured", vercelGlobalCsp.includes("default-src 'self'"));
+check("Vercel CSP blocks frame ancestors", vercelGlobalCsp.includes("frame-ancestors 'none'"));
+check("Vercel CSP blocks inline styles", vercelGlobalCsp.includes("style-src 'self'") && !vercelGlobalCsp.includes("'unsafe-inline'"));
+check("Vercel CSP includes JSON-LD hash", jsonLdHash && vercelGlobalCsp.includes(jsonLdHash), jsonLdHash);
+check("Vercel HSTS header is configured", getVercelHeader("/(.*)", "Strict-Transport-Security").includes("includeSubDomains"));
+check("Vercel X-Frame-Options DENY is configured", getVercelHeader("/(.*)", "X-Frame-Options") === "DENY");
+check("Vercel X-Content-Type-Options nosniff is configured", getVercelHeader("/(.*)", "X-Content-Type-Options") === "nosniff");
+check(
+  "Vercel Referrer-Policy is configured",
+  getVercelHeader("/(.*)", "Referrer-Policy") === "strict-origin-when-cross-origin",
+);
+check("Vercel Permissions-Policy is configured", getVercelHeader("/(.*)", "Permissions-Policy").includes("microphone=()"));
+check("Vercel admin route is no-store", /no-store/i.test(vercelAdminCache));
 
 const structuredData = read("src/components/common/StructuredData.jsx");
 check("React runtime has no dangerouslySetInnerHTML structured data", !structuredData.includes("dangerouslySetInnerHTML"));
 
 const serviceWorker = read("public/sw.js");
-check("service worker cache version is hardened", serviceWorker.includes("donghae-homepage-v5"));
+check("service worker cache version is hardened", serviceWorker.includes("donghae-homepage-v6"));
 check("service worker bypasses cross-origin requests", serviceWorker.includes("requestUrl.origin !== self.location.origin"));
 check("service worker does not cache navigation responses", serviceWorker.includes("isNavigationRequest"));
 check("service worker caches only successful basic responses", serviceWorker.includes("!response.ok || response.type !== \"basic\""));
@@ -208,6 +244,10 @@ check("Supabase deploy workflow cleans temporary verification review", supabaseD
 check(
   "Supabase deploy workflow cleans temporary upload verification review",
   supabaseDeployWorkflow.includes("20260721124500_cleanup_admin_upload_verification_review.sql"),
+);
+check(
+  "Supabase deploy workflow allows Vercel admin origin",
+  supabaseDeployWorkflow.includes("https://eulwangri-donghae-homepage.vercel.app"),
 );
 check("Supabase deploy workflow allows local admin verification origins", supabaseDeployWorkflow.includes("http://127.0.0.1:4175"));
 check("Supabase deploy workflow deploys admin edge function", supabaseDeployWorkflow.includes("functions deploy admin-review"));

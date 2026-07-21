@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sungjun7675.github.io/eulwangri-donghae-homepage/sitemap.xml
+Sitemap: https://eulwangri-donghae-homepage.vercel.app/sitemap.xml
