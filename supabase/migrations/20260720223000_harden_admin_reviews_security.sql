@@ -98,7 +98,9 @@ drop policy if exists "Review photos are publicly readable" on storage.objects;
 drop policy if exists "Homepage admins can read review photos" on storage.objects;
 drop policy if exists "Homepage admins can upload review photos" on storage.objects;
 drop policy if exists "Homepage admins can update review photos" on storage.objects;
+drop policy if exists "Homepage admins can update own review photos" on storage.objects;
 drop policy if exists "Homepage admins can delete review photos" on storage.objects;
+drop policy if exists "Homepage admins can delete own review photos" on storage.objects;
 
 create policy "Homepage admins can read review photos"
   on storage.objects
