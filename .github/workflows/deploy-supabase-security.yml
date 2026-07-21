@@ -39,4 +39,4 @@ jobs:
       - name: Deploy admin-review Edge Function
         run: |
           npx supabase secrets set ALLOWED_ADMIN_ORIGINS="$ALLOWED_ADMIN_ORIGINS" --project-ref "$SUPABASE_PROJECT_REF"
-          npx supabase functions deploy admin-review --project-ref "$SUPABASE_PROJECT_REF"
+          npx supabase functions deploy admin-review --use-api --project-ref "$SUPABASE_PROJECT_REF"
