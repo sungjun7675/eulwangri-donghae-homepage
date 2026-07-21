@@ -17,6 +17,14 @@ const getAdminUrl = (baseUrl) => {
   return url.href;
 };
 
+const getAdminSlashUrl = (adminUrl) => {
+  const url = new URL(adminUrl);
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}/`;
+  url.search = "";
+  url.hash = "";
+  return url.href;
+};
+
 const checkCommonHeaders = (label, headers) => {
   const csp = headers.get("content-security-policy") ?? "";
 
@@ -62,7 +70,8 @@ if (!/^https?:\/\//i.test(targetUrl)) {
     ? pass("public HTML cache policy is revalidation-based")
     : fail("public HTML cache policy is revalidation-based", publicCacheControl || "missing");
 
-  const adminResponse = await fetch(getAdminUrl(targetUrl), { redirect: "follow" });
+  const adminUrl = getAdminUrl(targetUrl);
+  const adminResponse = await fetch(adminUrl, { redirect: "follow" });
   const adminCacheControl = adminResponse.headers.get("cache-control") ?? "";
 
   adminResponse.ok
@@ -72,6 +81,16 @@ if (!/^https?:\/\//i.test(targetUrl)) {
   /no-store/i.test(adminCacheControl)
     ? pass("admin response cache policy is no-store")
     : fail("admin response cache policy is no-store", adminCacheControl || "missing");
+
+  const adminSlashResponse = await fetch(getAdminSlashUrl(adminUrl), { redirect: "follow" });
+  const adminSlashCacheControl = adminSlashResponse.headers.get("cache-control") ?? "";
+
+  adminSlashResponse.ok
+    ? pass("admin trailing-slash URL is reachable")
+    : fail("admin trailing-slash URL is reachable", `status ${adminSlashResponse.status}`);
+  /no-store/i.test(adminSlashCacheControl)
+    ? pass("admin trailing-slash cache policy is no-store")
+    : fail("admin trailing-slash cache policy is no-store", adminSlashCacheControl || "missing");
 }
 
 for (const result of results) {

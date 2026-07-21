@@ -203,6 +203,7 @@ const getVercelHeader = (source, key) =>
     ?.headers?.find((headerEntry) => headerEntry.key.toLowerCase() === key.toLowerCase())?.value ?? "";
 const vercelGlobalCsp = getVercelHeader("/(.*)", "Content-Security-Policy");
 const vercelAdminCache = getVercelHeader("/admin", "Cache-Control");
+const vercelAdminSlashCache = getVercelHeader("/admin/", "Cache-Control");
 
 check("Vercel config exists", Boolean(vercelConfig));
 check("Vercel rewrites /admin to SPA entry", JSON.stringify(vercelConfig?.rewrites ?? []).includes("\"source\":\"/admin\""));
@@ -219,6 +220,7 @@ check(
 );
 check("Vercel Permissions-Policy is configured", getVercelHeader("/(.*)", "Permissions-Policy").includes("microphone=()"));
 check("Vercel admin route is no-store", /no-store/i.test(vercelAdminCache));
+check("Vercel trailing-slash admin route is no-store", /no-store/i.test(vercelAdminSlashCache));
 
 const structuredData = read("src/components/common/StructuredData.jsx");
 check("React runtime has no dangerouslySetInnerHTML structured data", !structuredData.includes("dangerouslySetInnerHTML"));
