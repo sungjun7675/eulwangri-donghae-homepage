@@ -3,5 +3,6 @@ dist/
 .env
 .env.local
 *.log
+*.err
 src/assets/images/hero/hero-seafood-cinematic.png
 public/og-hero-cinematic.png
