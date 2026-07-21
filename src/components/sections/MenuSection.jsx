@@ -1,4 +1,4 @@
-import { menuItems } from "../../data/siteData.js";
+import { menuItems, siteInfo } from "../../data/siteData.js";
 
 const getImagePositionClass = (position) => (position === "center 44%" ? "image-position-center-44" : "");
 
@@ -13,14 +13,15 @@ export default function MenuSection({ variant = "compact" }) {
     >
       <div className="card-title-row">
         <h2 id="menu-title">인기 메뉴 BEST</h2>
-        <a href="https://map.naver.com/p/entry/place/37700467" target="_blank" rel="noreferrer">
+        <a href={siteInfo.naverPlaceUrl} target="_blank" rel="noreferrer">
           네이버 메뉴 확인
         </a>
       </div>
       {isFull ? (
         <>
           <p className="menu-card-intro">
-            실제 가격과 세트 구성은 네이버 플레이스 또는 전화로 확인하는 방식이 가장 정확합니다.
+            실제 가격과 세트 구성은 계절, 재료 수급, 매장 운영 상황에 따라 달라질 수 있습니다. 방문 전 네이버
+            플레이스 또는 전화로 최종 확인하는 흐름을 기준으로 안내합니다.
           </p>
           <div className="menu-detail-grid">
             {menuItems.map((item) => (
@@ -37,7 +38,18 @@ export default function MenuSection({ variant = "compact" }) {
                 <div className="menu-detail-copy">
                   <span>{item.category}</span>
                   <h3>{item.name}</h3>
+                  <div className="menu-detail-meta">
+                    <strong className="menu-price">{item.price}</strong>
+                    <small>{item.serving}</small>
+                  </div>
                   <p>{item.description}</p>
+                  {item.includes?.length ? (
+                    <div className="menu-include-list" aria-label={`${item.name} 구성`}>
+                      {item.includes.map((include) => (
+                        <span key={include}>{include}</span>
+                      ))}
+                    </div>
+                  ) : null}
                   <small>{item.note}</small>
                 </div>
               </article>
@@ -46,7 +58,7 @@ export default function MenuSection({ variant = "compact" }) {
         </>
       ) : (
         <div className="menu-list">
-          {menuItems.map((item) => (
+          {menuItems.slice(0, 5).map((item) => (
             <article className="menu-item" key={item.name}>
               <div className="menu-thumb">
                 <img
@@ -58,14 +70,15 @@ export default function MenuSection({ variant = "compact" }) {
                 />
               </div>
               <h3>{item.name}</h3>
+              <span>{item.price}</span>
             </article>
           ))}
         </div>
       )}
       {isFull ? (
         <div className="menu-verify-row">
-          <p>메뉴 정보는 실제 운영 상황에 따라 바뀔 수 있습니다.</p>
-          <a href="tel:050713952840">전화로 메뉴 확인</a>
+          <p>가격, 세트 구성, 라스트오더는 현장 운영 상황에 따라 달라질 수 있습니다.</p>
+          <a href={`tel:${siteInfo.phone.replaceAll("-", "")}`}>전화로 메뉴 확인</a>
         </div>
       ) : null}
     </section>

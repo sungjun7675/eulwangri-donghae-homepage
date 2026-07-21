@@ -22,7 +22,7 @@ export default function MapSection() {
           네이버 지도
         </a>
       </div>
-      <div className="map-preview" role="img" aria-label="을왕리 해변 인근 위치 안내 지도">
+      <div className="map-preview" role="img" aria-label="을왕리해수욕장 인근 위치 안내 지도">
         <span className="map-water" />
         <span className="map-land" />
         <span className="map-road map-road-main" />
@@ -50,12 +50,12 @@ export default function MapSection() {
       </div>
       <div className="route-note-list" aria-label="방문 전 확인 사항">
         <p>
-          <strong>방문 전 체크</strong>
-          <span>네이버 지도에서 실시간 길찾기를 확인하고, 출발 전 영업 여부를 전화로 확인하세요.</span>
+          <strong>출발 전 체크</strong>
+          <span>네이버 지도에서 실시간 길찾기와 매장 운영 상태를 확인한 뒤 이동하세요.</span>
         </p>
         <p>
-          <strong>주소 기준</strong>
-          <span>{siteInfo.locationHint} 위치로 안내합니다.</span>
+          <strong>위치 기준</strong>
+          <span>{siteInfo.locationHint} 기준으로 안내합니다. 주차와 대기 상황은 현장 상황에 따라 달라질 수 있습니다.</span>
         </p>
       </div>
     </section>

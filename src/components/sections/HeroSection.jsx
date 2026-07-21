@@ -1,9 +1,9 @@
-import { assets, reviewSummary, siteInfo } from "../../data/siteData.js";
+import { assets, heroFacts, reviewSummary, siteInfo } from "../../data/siteData.js";
+import { getPageHref } from "../../lib/routes.js";
 
 export default function HeroSection() {
-  const reserveLinkProps = siteInfo.naverPlaceUrl
-    ? { href: siteInfo.naverPlaceUrl, target: "_blank", rel: "noreferrer" }
-    : { href: "#reservation" };
+  const naverLink = siteInfo.bookingUrl || siteInfo.naverPlaceUrl;
+  const naverLabel = siteInfo.bookingUrl ? "네이버 예약하기" : "네이버 확인";
 
   return (
     <section className="hero-section" id="home" aria-labelledby="hero-title">
@@ -22,18 +22,28 @@ export default function HeroSection() {
           <h1 id="hero-title">{siteInfo.headline}</h1>
           <p className="hero-description">{siteInfo.description}</p>
           <div className="hero-actions">
-            <a className="button button-outline" href="#menu">
-              <span aria-hidden="true">◎</span>
+            <a className="button button-outline" href={getPageHref("menu")}>
               메뉴보기
             </a>
             <a
               className="button button-solid"
-              aria-label="네이버 플레이스에서 예약 정보 확인"
-              {...reserveLinkProps}
+              href={naverLink}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${siteInfo.name} 네이버 플레이스 확인`}
             >
               <span aria-hidden="true">N</span>
-              네이버 예약하기
+              {naverLabel}
             </a>
+          </div>
+          <div className="hero-facts" aria-label="방문 전 핵심 정보">
+            {heroFacts.map((fact) => (
+              <article className="hero-fact" key={fact.label}>
+                <span>{fact.label}</span>
+                <strong>{fact.value}</strong>
+                <small>{fact.helper}</small>
+              </article>
+            ))}
           </div>
         </div>
 
@@ -44,13 +54,15 @@ export default function HeroSection() {
             <strong>{reviewSummary.status}</strong>
           </div>
           <div className="score-line">
-            <span className="score-star" aria-hidden="true">◇</span>
+            <span className="score-star" aria-hidden="true">
+              ★
+            </span>
             <strong>{reviewSummary.headline}</strong>
           </div>
           <p>{reviewSummary.totalLabel}</p>
           <div className="score-divider" />
           <p className="score-rank">
-            <span aria-hidden="true">◇</span>
+            <span aria-hidden="true">BEST</span>
             <small>{reviewSummary.badge}</small>
             <strong>{reviewSummary.rank}</strong>
           </p>

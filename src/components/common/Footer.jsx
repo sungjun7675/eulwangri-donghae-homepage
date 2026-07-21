@@ -7,7 +7,7 @@ export default function Footer() {
         <strong>{siteInfo.name}</strong>
         <span>{siteInfo.sourceNote}</span>
       </p>
-      <p>리뷰와 예약 가능 여부는 네이버 플레이스 또는 전화 문의로 확인하세요.</p>
+      <p>운영시간, 예약 가능 여부, 메뉴 구성은 방문 전 네이버 플레이스 또는 전화로 확인하세요.</p>
     </footer>
   );
 }

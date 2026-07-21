@@ -13,27 +13,27 @@ const pageCopy = {
   menu: {
     eyebrow: "Menu",
     title: "동해회조개구이 메뉴",
-    description: "대표 메뉴와 실제 음식 사진을 한 화면에서 확인할 수 있도록 구성했습니다.",
+    description: "대표 세트, 조개구이, 해산물 식사 메뉴를 사진과 함께 확인할 수 있게 구성했습니다.",
   },
   store: {
     eyebrow: "Store",
     title: "매장소개",
-    description: "주소, 전화번호, 영업시간과 매장 분위기를 한 화면에서 확인하세요.",
+    description: "주소, 전화번호, 영업시간, 매장 분위기와 방문 전 확인할 정보를 한 화면에 정리했습니다.",
   },
   reviews: {
     eyebrow: "Reviews",
     title: "방문자 리뷰",
-    description: "네이버 플레이스 기준 최신 리뷰와 방문자 사진을 확인할 수 있도록 연결했습니다.",
+    description: "네이버 리뷰 캡처 기반 대표 후기를 사진, 작성자 표기, 날짜와 함께 확인할 수 있습니다.",
   },
   location: {
     eyebrow: "Location",
     title: "찾아오시는길",
-    description: "을왕리해수욕장 인근 위치와 길찾기, 전화, 주소복사를 제공합니다.",
+    description: "을왕리해수욕장 인근 위치, 길찾기, 전화, 주소 복사를 빠르게 사용할 수 있습니다.",
   },
   reservation: {
     eyebrow: "Guide",
     title: "이용안내",
-    description: "예약, 영업 상태, 메뉴 가격대와 방문 전 확인 사항을 한 화면에 정리했습니다.",
+    description: "예약, 영업 상태, 메뉴 가격, 방문 전 확인 사항을 한 화면에 정리했습니다.",
   },
 };
 
@@ -57,6 +57,12 @@ function HomeView() {
     <>
       <HeroSection />
       <ReviewSection />
+      <ReviewGuideSection variant="compact" />
+      <div className="container dashboard-grid home-dashboard-grid">
+        <MenuSection />
+        <StoreInfoSection />
+        <MapSection />
+      </div>
       <LocalInfoSection />
     </>
   );
@@ -89,7 +95,6 @@ export default function Home({ currentPage = "home" }) {
     return (
       <PageView page="reviews">
         <ReviewGuideSection />
-        <ReviewSection />
       </PageView>
     );
   }

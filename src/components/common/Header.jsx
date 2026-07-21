@@ -4,9 +4,8 @@ import { getPageHref } from "../../lib/routes.js";
 
 export default function Header({ currentPage = "home", onNavigate }) {
   const [isOpen, setIsOpen] = useState(false);
-  const reserveLinkProps = siteInfo.naverPlaceUrl
-    ? { href: siteInfo.naverPlaceUrl, target: "_blank", rel: "noreferrer" }
-    : { href: getPageHref("reservation") };
+  const naverLink = siteInfo.bookingUrl || siteInfo.naverPlaceUrl;
+  const naverLabel = siteInfo.bookingUrl ? "네이버 예약" : "네이버 확인";
 
   const handleNavClick = (event, item) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
@@ -26,7 +25,7 @@ export default function Header({ currentPage = "home", onNavigate }) {
       <a
         className="brand"
         href={getPageHref("home")}
-        aria-label="을왕리 동해회조개구이 홈"
+        aria-label={`${siteInfo.name} 홈으로 이동`}
         onClick={(event) => handleNavClick(event, { id: "home" })}
       >
         <span className="brand-mark" aria-hidden="true">
@@ -68,11 +67,13 @@ export default function Header({ currentPage = "home", onNavigate }) {
 
       <a
         className="naver-reserve header-reserve"
-        aria-label="네이버 플레이스에서 예약 정보 확인"
-        {...reserveLinkProps}
+        href={naverLink}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${siteInfo.name} 네이버 플레이스 확인`}
       >
         <span aria-hidden="true">N</span>
-        네이버 예약
+        {naverLabel}
       </a>
     </header>
   );
