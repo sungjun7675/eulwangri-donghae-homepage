@@ -1221,7 +1221,11 @@ export default function Admin() {
   };
 
   const handleDeleteReview = async (review) => {
-    const confirmed = window.confirm("이 리뷰를 삭제할까요? 저장된 사진 파일은 삭제하지 않고 보존됩니다.");
+    const confirmed = window.confirm(
+      isAdminEdgeFunctionsEnabled
+        ? "이 리뷰를 삭제할까요? private storage에 저장된 리뷰 사진 파일도 함께 삭제됩니다."
+        : "이 리뷰를 삭제할까요? Edge Function 비활성 상태에서는 저장된 사진 파일은 삭제하지 않고 보존됩니다.",
+    );
 
     if (!confirmed) {
       return;
@@ -1234,11 +1238,16 @@ export default function Admin() {
 
     try {
       if (isAdminEdgeFunctionsEnabled) {
-        await invokeAdminReviewAction(supabase, "deleteReview", {
+        const deleteResult = await invokeAdminReviewAction(supabase, "deleteReview", {
           id: review.id,
           wasPublished: Boolean(review.is_published),
           imageCount,
         });
+        const deletedImageCount = Number(deleteResult?.deletedImageCount) || 0;
+
+        if (deletedImageCount > 0) {
+          listWarning = `리뷰와 private storage 사진 ${deletedImageCount}개를 삭제했습니다.`;
+        }
       } else {
         const { error } = await supabase.from("homepage_reviews").delete().eq("id", review.id);
 

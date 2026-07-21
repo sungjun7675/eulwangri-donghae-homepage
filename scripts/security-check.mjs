@@ -105,6 +105,10 @@ check("admin uses signed URLs for review photos", admin.includes("createSignedUr
 check("admin records audit logs", admin.includes("recordAuditLog"));
 check("admin no longer creates public storage URLs", !admin.includes(".getPublicUrl("));
 check("admin form applies local submit throttling", admin.includes("MIN_REVIEW_SUBMIT_INTERVAL_MS"));
+check(
+  "admin delete copy reflects private storage deletion",
+  admin.includes("private storage에 저장된 리뷰 사진 파일도 함께 삭제됩니다"),
+);
 
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
 const finalBoundaryMigration = "supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql";
@@ -150,6 +154,19 @@ if (existsSync(join(root, edgeFunctionPath))) {
   check("edge function applies origin allow-list", edgeFunction.includes("ALLOWED_ADMIN_ORIGINS"));
   check("edge function does not use wildcard CORS", !edgeFunction.includes('"Access-Control-Allow-Origin": "*"'));
   check("edge function avoids response caching", edgeFunction.includes('"Cache-Control": "no-store"'));
+  check("edge function reads stored image paths before delete", edgeFunction.includes('.select("id, image_paths")'));
+  check(
+    "edge function removes private review photos through Storage API",
+    edgeFunction.includes(".storage") && edgeFunction.includes(".remove(imagePaths)"),
+  );
+  check(
+    "edge function does not trust delete payload image count",
+    edgeFunction.includes("image_count: imagePaths.length") && edgeFunction.includes("requested_image_count"),
+  );
+  check(
+    "edge function fails closed if photo deletion fails",
+    edgeFunction.includes("리뷰 사진 파일을 삭제하지 못했습니다."),
+  );
 }
 
 const indexHtml = read("index.html");

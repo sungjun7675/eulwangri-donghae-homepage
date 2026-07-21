@@ -334,6 +334,39 @@ Deno.serve(async (request) => {
       return json(400, { ok: false, message: "리뷰 ID를 확인하세요." }, origin);
     }
 
+    const { data: review, error: readError } = await adminClient
+      .from("homepage_reviews")
+      .select("id, image_paths")
+      .eq("id", reviewId)
+      .maybeSingle();
+
+    if (readError) {
+      return json(500, { ok: false, message: "삭제할 리뷰 정보를 확인하지 못했습니다." }, origin);
+    }
+
+    if (!review?.id) {
+      return json(404, { ok: false, message: "이미 삭제됐거나 존재하지 않는 리뷰입니다." }, origin);
+    }
+
+    const imagePaths = normalizeImagePaths(review.image_paths, user.id);
+
+    if (imagePaths.length > 0) {
+      const { error: storageError } = await adminClient.storage
+        .from(REVIEW_PHOTO_BUCKET)
+        .remove(imagePaths);
+
+      if (storageError) {
+        return json(500, { ok: false, message: "리뷰 사진 파일을 삭제하지 못했습니다." }, origin);
+      }
+
+      await adminClient.from("homepage_review_audit_logs").insert({
+        action: "review_photo_delete",
+        review_id: reviewId,
+        actor_user_id: user.id,
+        metadata: { image_count: imagePaths.length },
+      });
+    }
+
     const { error } = await adminClient.from("homepage_reviews").delete().eq("id", reviewId);
 
     if (error) {
@@ -346,11 +379,12 @@ Deno.serve(async (request) => {
       actor_user_id: user.id,
       metadata: {
         was_published: Boolean(payload.wasPublished),
-        image_count: Number(payload.imageCount) || 0,
+        image_count: imagePaths.length,
+        requested_image_count: Number(payload.imageCount) || 0,
       },
     });
 
-    return json(200, { ok: true, data: { id: reviewId } }, origin);
+    return json(200, { ok: true, data: { id: reviewId, deletedImageCount: imagePaths.length } }, origin);
   }
 
   return json(400, { ok: false, message: "지원하지 않는 관리자 작업입니다." }, origin);
