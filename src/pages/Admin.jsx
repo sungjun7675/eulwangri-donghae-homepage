@@ -1120,7 +1120,9 @@ export default function Admin() {
         imageHashes,
         isPublished: form.isPublished,
       };
-      let saveStatus = "저장 완료. 공개 가능 데이터로 보관되었습니다.";
+      let saveStatus = form.isPublished
+        ? "저장 완료. 공개 가능 데이터로 보관되었습니다."
+        : "저장 완료. 비공개 검수 데이터로 보관되었습니다.";
 
       if (isAdminEdgeFunctionsEnabled) {
         await invokeAdminReviewAction(supabase, "createReview", reviewPayload);

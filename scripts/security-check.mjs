@@ -109,6 +109,7 @@ check("admin form applies local submit throttling", admin.includes("MIN_REVIEW_S
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
 const finalBoundaryMigration = "supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql";
 const ensureAdminMigration = "supabase/migrations/20260721120500_ensure_homepage_admin.sql";
+const cleanupVerificationMigration = "supabase/migrations/20260721123000_cleanup_admin_verification_review.sql";
 check("security hardening migration exists", existsSync(join(root, hardeningMigration)));
 
 if (existsSync(join(root, hardeningMigration))) {
@@ -121,6 +122,7 @@ if (existsSync(join(root, hardeningMigration))) {
 
 check("admin boundary and rate limit migration exists", existsSync(join(root, finalBoundaryMigration)));
 check("homepage admin entitlement migration exists", existsSync(join(root, ensureAdminMigration)));
+check("admin verification cleanup migration exists", existsSync(join(root, cleanupVerificationMigration)));
 
 if (existsSync(join(root, finalBoundaryMigration))) {
   const migration = read(finalBoundaryMigration);
@@ -179,6 +181,7 @@ const supabaseDeployWorkflow = read(".github/workflows/deploy-supabase-security.
 check("manual Supabase security deploy workflow exists", supabaseDeployWorkflow.includes("Deploy Supabase security boundary"));
 check("Supabase deploy workflow applies migrations", supabaseDeployWorkflow.includes("20260720230000_harden_admin_boundary_and_rate_limit.sql"));
 check("Supabase deploy workflow ensures active homepage admin", supabaseDeployWorkflow.includes("20260721120500_ensure_homepage_admin.sql"));
+check("Supabase deploy workflow cleans temporary verification review", supabaseDeployWorkflow.includes("20260721123000_cleanup_admin_verification_review.sql"));
 check("Supabase deploy workflow allows local admin verification origins", supabaseDeployWorkflow.includes("http://127.0.0.1:4175"));
 check("Supabase deploy workflow deploys admin edge function", supabaseDeployWorkflow.includes("functions deploy admin-review"));
 check("Supabase deploy workflow requires access token", supabaseDeployWorkflow.includes("SUPABASE_ACCESS_TOKEN"));
