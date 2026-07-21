@@ -34,6 +34,7 @@ jobs:
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260721120500_ensure_homepage_admin.sql
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260721123000_cleanup_admin_verification_review.sql
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260721124500_cleanup_admin_upload_verification_review.sql
 
       - name: Deploy admin-review Edge Function
         run: |
