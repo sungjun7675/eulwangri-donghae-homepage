@@ -36,7 +36,9 @@ const getCorsHeaders = (origin: string | null) => {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
+    "Cache-Control": "no-store",
     "Vary": "Origin",
+    "X-Content-Type-Options": "nosniff",
   };
 };
 

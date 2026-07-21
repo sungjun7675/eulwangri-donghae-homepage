@@ -170,6 +170,11 @@ if (existsSync(join(root, edgeFunctionPath))) {
   check("edge function applies origin allow-list", edgeFunction.includes("ALLOWED_ADMIN_ORIGINS"));
   check("edge function does not use wildcard CORS", !edgeFunction.includes('"Access-Control-Allow-Origin": "*"'));
   check("edge function avoids response caching", edgeFunction.includes('"Cache-Control": "no-store"'));
+  check(
+    "edge function preflight avoids response caching",
+    edgeFunction.includes('"Access-Control-Max-Age": "86400"') && edgeFunction.includes('"Cache-Control": "no-store"'),
+  );
+  check("edge function preflight uses nosniff", edgeFunction.includes('"X-Content-Type-Options": "nosniff"'));
   check("edge function reads stored image paths before delete", edgeFunction.includes('.select("id, image_paths")'));
   check(
     "edge function removes private review photos through Storage API",
