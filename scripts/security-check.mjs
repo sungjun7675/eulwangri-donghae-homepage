@@ -76,6 +76,10 @@ check(
   "HTTP header security script is registered",
   packageJson.scripts?.["security:headers"] === "node scripts/header-check.mjs",
 );
+check(
+  "static route entrypoint script is wired into build",
+  packageJson.scripts?.build?.includes("scripts/create-route-entrypoints.mjs"),
+);
 check(".env and .env.local are ignored", gitignore.includes(".env") && gitignore.includes(".env.local"));
 check(
   "only .env.example is tracked",

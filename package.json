@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/create-route-entrypoints.mjs",
     "preview": "vite preview",
     "security:check": "node scripts/security-check.mjs",
     "security:supabase": "node scripts/supabase-security-check.mjs",
