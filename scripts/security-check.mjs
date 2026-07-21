@@ -108,6 +108,7 @@ check("admin form applies local submit throttling", admin.includes("MIN_REVIEW_S
 
 const hardeningMigration = "supabase/migrations/20260720223000_harden_admin_reviews_security.sql";
 const finalBoundaryMigration = "supabase/migrations/20260720230000_harden_admin_boundary_and_rate_limit.sql";
+const ensureAdminMigration = "supabase/migrations/20260721120500_ensure_homepage_admin.sql";
 check("security hardening migration exists", existsSync(join(root, hardeningMigration)));
 
 if (existsSync(join(root, hardeningMigration))) {
@@ -119,6 +120,7 @@ if (existsSync(join(root, hardeningMigration))) {
 }
 
 check("admin boundary and rate limit migration exists", existsSync(join(root, finalBoundaryMigration)));
+check("homepage admin entitlement migration exists", existsSync(join(root, ensureAdminMigration)));
 
 if (existsSync(join(root, finalBoundaryMigration))) {
   const migration = read(finalBoundaryMigration);
@@ -176,6 +178,7 @@ check("scheduled security audit runs production build", scheduledAudit.includes(
 const supabaseDeployWorkflow = read(".github/workflows/deploy-supabase-security.yml");
 check("manual Supabase security deploy workflow exists", supabaseDeployWorkflow.includes("Deploy Supabase security boundary"));
 check("Supabase deploy workflow applies migrations", supabaseDeployWorkflow.includes("20260720230000_harden_admin_boundary_and_rate_limit.sql"));
+check("Supabase deploy workflow ensures active homepage admin", supabaseDeployWorkflow.includes("20260721120500_ensure_homepage_admin.sql"));
 check("Supabase deploy workflow deploys admin edge function", supabaseDeployWorkflow.includes("functions deploy admin-review"));
 check("Supabase deploy workflow requires access token", supabaseDeployWorkflow.includes("SUPABASE_ACCESS_TOKEN"));
 check("Supabase deploy workflow requires DB URL", supabaseDeployWorkflow.includes("SUPABASE_DB_URL"));
