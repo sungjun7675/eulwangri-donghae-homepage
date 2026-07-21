@@ -179,6 +179,7 @@ const supabaseDeployWorkflow = read(".github/workflows/deploy-supabase-security.
 check("manual Supabase security deploy workflow exists", supabaseDeployWorkflow.includes("Deploy Supabase security boundary"));
 check("Supabase deploy workflow applies migrations", supabaseDeployWorkflow.includes("20260720230000_harden_admin_boundary_and_rate_limit.sql"));
 check("Supabase deploy workflow ensures active homepage admin", supabaseDeployWorkflow.includes("20260721120500_ensure_homepage_admin.sql"));
+check("Supabase deploy workflow allows local admin verification origins", supabaseDeployWorkflow.includes("http://127.0.0.1:4175"));
 check("Supabase deploy workflow deploys admin edge function", supabaseDeployWorkflow.includes("functions deploy admin-review"));
 check("Supabase deploy workflow requires access token", supabaseDeployWorkflow.includes("SUPABASE_ACCESS_TOKEN"));
 check("Supabase deploy workflow requires DB URL", supabaseDeployWorkflow.includes("SUPABASE_DB_URL"));
