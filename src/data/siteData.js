@@ -35,6 +35,7 @@ export const siteInfo = {
     "https://map.naver.com/p/entry/place/37700467?lng=126.37128&lat=37.4492414&placePath=%2Fhome&entry=plt&searchType=place&c=15.00,0,0,2,dh",
   directionsUrl:
     "https://map.naver.com/p/entry/place/37700467?lng=126.37128&lat=37.4492414&placePath=%2Fhome&entry=plt&searchType=place&c=15.00,0,0,2,dh",
+  googleMapEmbedUrl: "https://www.google.com/maps?q=37.4492414,126.37128&hl=ko&z=16&output=embed",
   naverPlaceId: "37700467",
   bookingUrl: "",
   locationHint: "을왕리해수욕장 인근",
@@ -231,9 +232,9 @@ export const menuItems = [
     includes: ["조개구이", "치즈가리비"],
     description: "조개구이와 치즈가리비를 함께 즐길 수 있는 인기 구성입니다.",
     note: "치즈가리비 포함 여부와 사이즈는 주문 전 확인",
-    image: officialCheeseScallopCloseupImage,
-    alt: "집게에 든 치즈가리비와 조개구이 업체 등록 사진",
-    imagePosition: "center 58%",
+    image: officialCheeseScallopTableImage,
+    alt: "치즈가리비와 조개구이가 함께 담긴 업체 등록 사진",
+    imagePosition: "center 54%",
   },
   {
     name: "해물칼국수",
@@ -263,7 +264,7 @@ export const menuItems = [
 
 export const publicReviewItems = [];
 
-export const galleryItems = [
+export const menuGalleryItems = [
   {
     name: "스페셜 조개 한상",
     caption: "네이버 업체 등록 승인 사진 기준의 대표 조개구이 구성",
@@ -279,10 +280,10 @@ export const galleryItems = [
     imagePosition: "center 50%",
   },
   {
-    name: "치즈가리비 클로즈업",
-    caption: "치즈가리비의 양감과 굽는 느낌을 가까이 보여주는 사진",
+    name: "치즈키조개 클로즈업",
+    caption: "치즈를 올린 키조개 구이의 양감과 굽는 느낌을 가까이 보여주는 사진",
     image: officialCheeseScallopCloseupImage,
-    alt: "집게에 든 치즈가리비 클로즈업 사진",
+    alt: "집게에 든 치즈키조개 클로즈업 사진",
     imagePosition: "center 58%",
   },
   {
@@ -321,6 +322,8 @@ export const galleryItems = [
     imagePosition: "center",
   },
 ];
+
+export const galleryItems = menuGalleryItems;
 
 export const photoSources = [
   {

@@ -210,7 +210,10 @@ const csp = indexHtml.match(/http-equiv="Content-Security-Policy"\s+content="([^
 const jsonLdHash = getJsonLdHash(indexHtml);
 check("CSP meta is present", Boolean(csp));
 check("CSP blocks object embedding", csp.includes("object-src 'none'"));
-check("CSP blocks framing via frame-src", csp.includes("frame-src 'none'"));
+check(
+  "CSP limits frame-src to Google Maps",
+  csp.includes("frame-src https://www.google.com https://maps.google.com"),
+);
 check("CSP limits connect-src to self and Supabase", csp.includes("connect-src 'self' https://*.supabase.co wss://*.supabase.co"));
 check("CSP script-src avoids unsafe-inline", /script-src[^;]+/.test(csp) && !/script-src[^;]+'unsafe-inline'/.test(csp));
 check("CSP style-src avoids unsafe-inline", /style-src[^;]+/.test(csp) && !/style-src[^;]+'unsafe-inline'/.test(csp));

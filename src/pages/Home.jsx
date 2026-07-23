@@ -8,6 +8,7 @@ import ReservationSection from "../components/sections/ReservationSection.jsx";
 import ReviewGuideSection from "../components/sections/ReviewGuideSection.jsx";
 import ReviewSection from "../components/sections/ReviewSection.jsx";
 import StoreInfoSection from "../components/sections/StoreInfoSection.jsx";
+import { menuGalleryItems } from "../data/siteData.js";
 
 const pageCopy = {
   menu: {
@@ -57,13 +58,11 @@ function HomeView() {
     <>
       <HeroSection />
       <ReviewSection />
-      <ReviewGuideSection variant="compact" />
       <div className="container dashboard-grid home-dashboard-grid">
         <MenuSection />
-        <StoreInfoSection />
-        <MapSection />
+        <StoreInfoSection variant="summary" />
+        <MapSection variant="summary" />
       </div>
-      <LocalInfoSection />
     </>
   );
 }
@@ -75,7 +74,7 @@ export default function Home({ currentPage = "home" }) {
         <div className="container subpage-card-grid">
           <MenuSection variant="full" />
         </div>
-        <GallerySection />
+        <GallerySection items={menuGalleryItems} title="메뉴 사진 갤러리" />
       </PageView>
     );
   }
@@ -86,7 +85,6 @@ export default function Home({ currentPage = "home" }) {
         <div className="container subpage-card-grid">
           <StoreInfoSection />
         </div>
-        <GallerySection />
       </PageView>
     );
   }
@@ -105,9 +103,7 @@ export default function Home({ currentPage = "home" }) {
       <PageView page="location">
         <div className="container subpage-card-grid">
           <MapSection />
-          <StoreInfoSection />
         </div>
-        <ReservationSection />
       </PageView>
     );
   }
@@ -116,7 +112,6 @@ export default function Home({ currentPage = "home" }) {
     return (
       <PageView page="reservation">
         <ReservationSection />
-        <LocalInfoSection />
         <NoticeSection />
       </PageView>
     );

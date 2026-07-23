@@ -1,4 +1,4 @@
-import { galleryItems } from "../../data/siteData.js";
+import { menuGalleryItems } from "../../data/siteData.js";
 
 const imagePositionClassMap = {
   "center 44%": "image-position-center-44",
@@ -10,17 +10,17 @@ const imagePositionClassMap = {
 
 const getImagePositionClass = (position) => imagePositionClassMap[position] || "";
 
-export default function GallerySection() {
+export default function GallerySection({ items = menuGalleryItems, title = "사진으로 보는 메뉴", eyebrow = "Gallery" }) {
   return (
     <section className="gallery-section" aria-labelledby="gallery-title">
       <div className="container">
         <div className="section-title compact">
-          <p className="section-eyebrow">Gallery</p>
-          <h2 id="gallery-title">사진으로 보는 동해</h2>
+          <p className="section-eyebrow">{eyebrow}</p>
+          <h2 id="gallery-title">{title}</h2>
         </div>
-        <div className="gallery-grid">
-          {galleryItems.map((item) => (
-            <figure className="gallery-card" key={item.name}>
+        <div className="gallery-grid gallery-grid-featured">
+          {items.map((item, index) => (
+            <figure className={`gallery-card ${index === 0 ? "gallery-card-large" : ""}`} key={item.name}>
               <img
                 className={`gallery-tile ${getImagePositionClass(item.imagePosition)}`.trim()}
                 src={item.image}
