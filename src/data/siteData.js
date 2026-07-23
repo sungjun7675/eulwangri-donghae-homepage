@@ -1,6 +1,9 @@
 import heroImage from "../assets/images/hero/hero-seafood-cinematic.jpg";
 import assortedShellfishImage from "../assets/images/menu/real-assorted-shellfish-optimized.jpg";
-import officialCheeseScallopImage from "../assets/images/menu/real-cheese-scallop-official.jpg";
+import officialCheeseScallopCloseupImage from "../assets/images/menu/official-cheese-scallop-closeup.jpg";
+import officialCheeseScallopTableImage from "../assets/images/menu/official-cheese-scallop-table.jpg";
+import officialSashimiShellfishImage from "../assets/images/menu/official-sashimi-shellfish.jpg";
+import officialSpecialShellfishImage from "../assets/images/menu/official-special-shellfish.jpg";
 import seafoodKalguksuImage from "../assets/images/menu/real-seafood-kalguksu-optimized.jpg";
 import shrimpShellfishImage from "../assets/images/menu/real-shrimp-shellfish-optimized.jpg";
 import spicyRawFishImage from "../assets/images/menu/real-spicy-raw-fish-optimized.jpg";
@@ -28,12 +31,16 @@ export const siteInfo = {
   phone: "0507-1395-2840",
   businessHours: "평일 10:00~24:00 / 금·토 10:00~02:00",
   businessHoursNote: "공개 검색 결과 기준이며 휴무, 라스트오더, 재료 소진은 방문 전 전화 또는 네이버 플레이스 확인 권장",
-  naverPlaceUrl: "https://map.naver.com/p/entry/place/37700467",
-  directionsUrl: "https://map.naver.com/p/entry/place/37700467",
+  naverPlaceUrl:
+    "https://map.naver.com/p/entry/place/37700467?lng=126.37128&lat=37.4492414&placePath=%2Fhome&entry=plt&searchType=place&c=15.00,0,0,2,dh",
+  directionsUrl:
+    "https://map.naver.com/p/entry/place/37700467?lng=126.37128&lat=37.4492414&placePath=%2Fhome&entry=plt&searchType=place&c=15.00,0,0,2,dh",
+  naverPlaceId: "37700467",
   bookingUrl: "",
   locationHint: "을왕리해수욕장 인근",
   latitude: 37.4492414,
   longitude: 126.37128,
+  coordinateLabel: "37.4492414, 126.37128",
   sourceNote: "네이버 플레이스와 공개 검색 결과 기준 정보 반영",
   verifiedDate: "2026.07.23",
 };
@@ -188,9 +195,9 @@ export const menuItems = [
     includes: ["회", "조개구이", "해산물 구성"],
     description: "회와 조개구이, 해산물 구성을 함께 즐기기 좋은 대표 세트입니다.",
     note: "인원수와 당일 재료에 따라 세부 구성 확인 권장",
-    image: assortedShellfishImage,
-    alt: "동해회조개구이의 조개 모둠 사진",
-    imagePosition: "center",
+    image: officialSpecialShellfishImage,
+    alt: "조개와 해산물이 담긴 스페셜 세트 업체 등록 사진",
+    imagePosition: "center 52%",
   },
   {
     name: "가족 Set",
@@ -200,9 +207,9 @@ export const menuItems = [
     includes: ["조개구이", "회", "식사/사이드 확인"],
     description: "여러 명이 함께 먹기 좋은 해산물 중심의 가족 방문용 세트입니다.",
     note: "가족 방문과 단체 전 주문 구성 확인 권장",
-    image: sashimiImage,
-    alt: "접시에 담긴 회 사진",
-    imagePosition: "center",
+    image: officialSashimiShellfishImage,
+    alt: "회와 조개구이가 함께 담긴 가족 세트 업체 등록 사진",
+    imagePosition: "center 50%",
   },
   {
     name: "커플 Set",
@@ -224,9 +231,9 @@ export const menuItems = [
     includes: ["조개구이", "치즈가리비"],
     description: "조개구이와 치즈가리비를 함께 즐길 수 있는 인기 구성입니다.",
     note: "치즈가리비 포함 여부와 사이즈는 주문 전 확인",
-    image: officialCheeseScallopImage,
-    alt: "치즈를 올린 가리비구이와 조개구이 사진",
-    imagePosition: "center 54%",
+    image: officialCheeseScallopCloseupImage,
+    alt: "집게에 든 치즈가리비와 조개구이 업체 등록 사진",
+    imagePosition: "center 58%",
   },
   {
     name: "해물칼국수",
@@ -258,25 +265,53 @@ export const publicReviewItems = [];
 
 export const galleryItems = [
   {
-    name: "조개구이 한상",
-    caption: "불판 위에서 즐기는 을왕리 조개구이 대표 이미지",
+    name: "스페셜 조개 한상",
+    caption: "네이버 업체 등록 승인 사진 기준의 대표 조개구이 구성",
+    image: officialSpecialShellfishImage,
+    alt: "조개와 해산물이 푸짐하게 담긴 스페셜 조개 한상 사진",
+    imagePosition: "center 52%",
+  },
+  {
+    name: "회와 조개구이",
+    caption: "회, 조개구이, 치즈 메뉴를 함께 확인할 수 있는 업체 등록 사진",
+    image: officialSashimiShellfishImage,
+    alt: "회와 조개구이가 함께 놓인 상차림 사진",
+    imagePosition: "center 50%",
+  },
+  {
+    name: "치즈가리비 클로즈업",
+    caption: "치즈가리비의 양감과 굽는 느낌을 가까이 보여주는 사진",
+    image: officialCheeseScallopCloseupImage,
+    alt: "집게에 든 치즈가리비 클로즈업 사진",
+    imagePosition: "center 58%",
+  },
+  {
+    name: "치즈가리비 테이블",
+    caption: "치즈가리비와 조개구이 구성을 한눈에 보는 업체 등록 사진",
+    image: officialCheeseScallopTableImage,
+    alt: "치즈가리비와 조개구이가 테이블에 놓인 사진",
+    imagePosition: "center 54%",
+  },
+  {
+    name: "조개구이 화력",
+    caption: "불판 위에서 굽는 조개구이의 첫인상을 전달하는 대표 이미지",
     image: heroImage,
     alt: "불판 위 조개구이 한상 사진",
     imagePosition: "center",
   },
   {
-    name: "회 한 접시",
-    caption: "회와 해산물 세트 구성을 함께 확인할 수 있는 메뉴 사진",
-    image: sashimiImage,
-    alt: "접시에 담긴 회 사진",
+    name: "조개 모둠",
+    caption: "조개구이 방문자가 기대하는 조개 모둠 구성을 보여주는 사진",
+    image: assortedShellfishImage,
+    alt: "다양한 조개가 담긴 조개 모둠 사진",
     imagePosition: "center",
   },
   {
-    name: "치즈 가리비",
-    caption: "조개+치즈가리비 세트와 어울리는 메뉴 사진",
-    image: officialCheeseScallopImage,
-    alt: "치즈를 올린 가리비구이와 조개구이 사진",
-    imagePosition: "center 54%",
+    name: "회 한 접시",
+    caption: "세트 구성에서 함께 확인할 수 있는 회 메뉴 사진",
+    image: sashimiImage,
+    alt: "접시에 담긴 회 사진",
+    imagePosition: "center",
   },
   {
     name: "해물칼국수",
@@ -289,8 +324,8 @@ export const galleryItems = [
 
 export const photoSources = [
   {
-    label: "네이버 플레이스 업체 등록 치즈가리비 사진",
-    url: "https://map.naver.com/p/entry/place/37700467",
+    label: "네이버 플레이스 업체 등록 승인 사진",
+    url: siteInfo.naverPlaceUrl,
   },
   {
     label: "당근 동해회조개구이 지역 프로필",

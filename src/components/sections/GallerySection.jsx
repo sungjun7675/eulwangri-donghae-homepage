@@ -2,7 +2,10 @@ import { galleryItems } from "../../data/siteData.js";
 
 const imagePositionClassMap = {
   "center 44%": "image-position-center-44",
+  "center 50%": "image-position-center-50",
+  "center 52%": "image-position-center-52",
   "center 54%": "image-position-center-54",
+  "center 58%": "image-position-center-58",
 };
 
 const getImagePositionClass = (position) => imagePositionClassMap[position] || "";

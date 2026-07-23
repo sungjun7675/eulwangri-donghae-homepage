@@ -1280,8 +1280,94 @@ main {
 
 .map-card {
   display: grid;
-  grid-template-rows: auto minmax(230px, 1fr) auto;
+  grid-template-rows: auto minmax(220px, auto) auto auto;
   gap: 12px;
+}
+
+.naver-location-panel {
+  display: grid;
+  min-height: 220px;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(46, 204, 113, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(3, 199, 90, 0.14), transparent 42%),
+    radial-gradient(circle at 82% 18%, rgba(216, 167, 53, 0.16), transparent 32%),
+    rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.naver-location-head,
+.naver-place-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.naver-location-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 950;
+  background: #03c75a;
+  box-shadow: 0 14px 28px rgba(3, 199, 90, 0.22);
+}
+
+.naver-location-head strong,
+.naver-coordinate-box strong,
+.naver-place-summary strong {
+  display: block;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.naver-location-head span,
+.naver-coordinate-box span,
+.naver-place-summary span {
+  display: block;
+  color: var(--color-gold-bright);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.naver-coordinate-box {
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.naver-coordinate-box strong {
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.naver-coordinate-box p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.naver-place-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.naver-place-summary p {
+  margin: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .map-preview {
@@ -1873,8 +1959,20 @@ main {
   object-position: center 44%;
 }
 
+.image-position-center-50 {
+  object-position: center 50%;
+}
+
+.image-position-center-52 {
+  object-position: center 52%;
+}
+
 .image-position-center-54 {
   object-position: center 54%;
+}
+
+.image-position-center-58 {
+  object-position: center 58%;
 }
 
 .gallery-card figcaption {
@@ -2962,6 +3060,19 @@ main {
 
   .map-preview {
     min-height: 190px;
+  }
+
+  .naver-location-panel {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .naver-place-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .naver-coordinate-box strong {
+    font-size: 18px;
   }
 
   .map-info-panel {

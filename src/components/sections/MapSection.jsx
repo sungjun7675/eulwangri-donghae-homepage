@@ -3,6 +3,7 @@ import { siteInfo } from "../../data/siteData.js";
 
 export default function MapSection() {
   const [isCopied, setIsCopied] = useState(false);
+  const coordinateText = siteInfo.coordinateLabel || `${siteInfo.latitude}, ${siteInfo.longitude}`;
 
   const handleCopyAddress = async () => {
     try {
@@ -22,14 +23,34 @@ export default function MapSection() {
           네이버 지도
         </a>
       </div>
-      <div className="map-preview" role="img" aria-label="을왕리해수욕장 인근 위치 안내 지도">
-        <span className="map-water" />
-        <span className="map-land" />
-        <span className="map-road map-road-main" />
-        <span className="map-road map-road-side" />
-        <span className="map-label map-label-beach">을왕리해수욕장</span>
-        <span className="map-label map-label-store">동해회조개구이</span>
-        <span className="map-pin" />
+      <div className="naver-location-panel" aria-label="네이버 지도 기준 위치 정보">
+        <div className="naver-location-head">
+          <span className="naver-location-logo" aria-hidden="true">
+            N
+          </span>
+          <div>
+            <strong>네이버 지도 기준 위치</strong>
+            <span>Place ID {siteInfo.naverPlaceId}</span>
+          </div>
+        </div>
+        <div className="naver-coordinate-box">
+          <span>정확 좌표</span>
+          <strong>{coordinateText}</strong>
+          <p>
+            네이버 플레이스 장소 ID와 좌표를 기준으로 연결합니다. 실제 길찾기, 교통, 주차 상황은 네이버
+            지도에서 확인하세요.
+          </p>
+        </div>
+        <div className="naver-place-summary">
+          <p>
+            <span>주소</span>
+            <strong>{siteInfo.address}</strong>
+          </p>
+          <p>
+            <span>위치</span>
+            <strong>{siteInfo.locationHint}</strong>
+          </p>
+        </div>
       </div>
       <div className="map-info-panel">
         <p>
@@ -50,12 +71,12 @@ export default function MapSection() {
       </div>
       <div className="route-note-list" aria-label="방문 전 확인 사항">
         <p>
-          <strong>출발 전 체크</strong>
-          <span>네이버 지도에서 실시간 길찾기와 매장 운영 상태를 확인한 뒤 이동하세요.</span>
+          <strong>정확도 기준</strong>
+          <span>네이버 플레이스 장소 ID {siteInfo.naverPlaceId}와 좌표 {coordinateText} 기준으로 연결합니다.</span>
         </p>
         <p>
-          <strong>위치 기준</strong>
-          <span>{siteInfo.locationHint} 기준으로 안내합니다. 주차와 대기 상황은 현장 상황에 따라 달라질 수 있습니다.</span>
+          <strong>실시간 길찾기</strong>
+          <span>교통, 주차, 도착지 입구는 네이버 지도에서 실시간으로 다시 확인하는 구조입니다.</span>
         </p>
       </div>
     </section>
