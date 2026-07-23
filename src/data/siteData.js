@@ -1,6 +1,6 @@
 import heroImage from "../assets/images/hero/hero-seafood-cinematic.jpg";
 import assortedShellfishImage from "../assets/images/menu/real-assorted-shellfish-optimized.jpg";
-import grilledScallopImage from "../assets/images/menu/real-grilled-scallop-optimized.jpg";
+import officialCheeseScallopImage from "../assets/images/menu/real-cheese-scallop-official.jpg";
 import seafoodKalguksuImage from "../assets/images/menu/real-seafood-kalguksu-optimized.jpg";
 import shrimpShellfishImage from "../assets/images/menu/real-shrimp-shellfish-optimized.jpg";
 import spicyRawFishImage from "../assets/images/menu/real-spicy-raw-fish-optimized.jpg";
@@ -35,7 +35,7 @@ export const siteInfo = {
   latitude: 37.4492414,
   longitude: 126.37128,
   sourceNote: "네이버 플레이스와 공개 검색 결과 기준 정보 반영",
-  verifiedDate: "2026.07.21",
+  verifiedDate: "2026.07.23",
 };
 
 export const navigationItems = [
@@ -57,21 +57,21 @@ export const reviewSummary = {
 };
 
 export const commercialReviewPolicy = {
-  heading: "상업 사용 허락이 확인된 리뷰만 노출합니다",
+  heading: "네이버 원문은 링크로 연결하고 확인된 자료만 노출합니다",
   description:
-    "네이버 리뷰 원문, 작성자명, 방문 사진은 작성자 권리와 플랫폼 약관을 존중해 무단 복제하지 않습니다. 현재 공개 화면은 리뷰 수와 네이버 확인 링크 중심으로 운영합니다.",
+    "방문자 리뷰 원문과 사진은 최신 상태를 네이버 플레이스에서 바로 확인할 수 있게 연결합니다. 홈페이지에는 리뷰 수, 방문 전 확인 포인트, 사용 허락이 확인된 사진만 반영합니다.",
   items: [
     {
-      label: "리뷰 원문",
-      value: "네이버 플레이스에서 직접 확인",
+      label: "리뷰 확인",
+      value: "리뷰 수와 최신 후기는 네이버 플레이스로 연결",
     },
     {
-      label: "리뷰 사진",
-      value: "직접 촬영했거나 사용 허락이 확인된 사진만 노출",
+      label: "사진 사용",
+      value: "업체 등록 사진과 사용 허락이 확인된 사진만 노출",
     },
     {
-      label: "자동 수집",
-      value: "네이버 약관 리스크가 있어 사용하지 않음",
+      label: "방문 판단",
+      value: "영업시간, 예약, 주차, 메뉴는 방문 전 재확인 권장",
     },
   ],
 };
@@ -224,9 +224,9 @@ export const menuItems = [
     includes: ["조개구이", "치즈가리비"],
     description: "조개구이와 치즈가리비를 함께 즐길 수 있는 인기 구성입니다.",
     note: "치즈가리비 포함 여부와 사이즈는 주문 전 확인",
-    image: grilledScallopImage,
-    alt: "불판 위 가리비구이 사진",
-    imagePosition: "center",
+    image: officialCheeseScallopImage,
+    alt: "치즈를 올린 가리비구이와 조개구이 사진",
+    imagePosition: "center 54%",
   },
   {
     name: "해물칼국수",
@@ -274,9 +274,9 @@ export const galleryItems = [
   {
     name: "치즈 가리비",
     caption: "조개+치즈가리비 세트와 어울리는 메뉴 사진",
-    image: grilledScallopImage,
-    alt: "불판 위 치즈 가리비 사진",
-    imagePosition: "center",
+    image: officialCheeseScallopImage,
+    alt: "치즈를 올린 가리비구이와 조개구이 사진",
+    imagePosition: "center 54%",
   },
   {
     name: "해물칼국수",
@@ -288,6 +288,10 @@ export const galleryItems = [
 ];
 
 export const photoSources = [
+  {
+    label: "네이버 플레이스 업체 등록 치즈가리비 사진",
+    url: "https://map.naver.com/p/entry/place/37700467",
+  },
   {
     label: "당근 동해회조개구이 지역 프로필",
     url: "https://www.daangn.com/kr/local-profile/%EB%8F%99%ED%95%B4%ED%9A%8C%EC%A1%B0%EA%B0%9C%EA%B5%AC%EC%9D%B4-1bxxdvjaq75d/",

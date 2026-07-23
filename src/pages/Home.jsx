@@ -23,7 +23,7 @@ const pageCopy = {
   reviews: {
     eyebrow: "Reviews",
     title: "방문자 리뷰",
-    description: "네이버 리뷰 캡처 기반 대표 후기를 사진, 작성자 표기, 날짜와 함께 확인할 수 있습니다.",
+    description: "네이버 플레이스 기준 리뷰 수와 최신 리뷰 확인 경로를 한 화면에서 확인할 수 있습니다.",
   },
   location: {
     eyebrow: "Location",
@@ -95,6 +95,7 @@ export default function Home({ currentPage = "home" }) {
     return (
       <PageView page="reviews">
         <ReviewGuideSection />
+        <LocalInfoSection />
       </PageView>
     );
   }
@@ -106,6 +107,7 @@ export default function Home({ currentPage = "home" }) {
           <MapSection />
           <StoreInfoSection />
         </div>
+        <ReservationSection />
       </PageView>
     );
   }
@@ -114,6 +116,7 @@ export default function Home({ currentPage = "home" }) {
     return (
       <PageView page="reservation">
         <ReservationSection />
+        <LocalInfoSection />
         <NoticeSection />
       </PageView>
     );

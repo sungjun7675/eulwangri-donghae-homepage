@@ -14,10 +14,10 @@ export default function ReviewGuideSection({ variant = "full" }) {
         <div className="public-review-header">
           <div>
             <p className="section-eyebrow">Visitor Reviews</p>
-            <h2 id="review-guide-title">방문자가 남긴 네이버 리뷰 흐름</h2>
+            <h2 id="review-guide-title">네이버 리뷰와 방문 전 확인 포인트</h2>
             <p>
-              네이버 리뷰 원문과 방문 사진은 권리 확인이 끝난 항목만 홈페이지에 노출합니다. 최신 리뷰와 사진은
-              네이버 플레이스에서 직접 확인할 수 있습니다.
+              방문자 리뷰 원문과 사진은 네이버 플레이스에서 최신 상태로 확인하도록 연결합니다. 홈페이지에는
+              리뷰 수, 확인 경로, 방문 전 체크 포인트를 먼저 정리해 실제 방문 판단이 빠르게 되도록 구성했습니다.
             </p>
           </div>
           <div className="public-review-summary">
@@ -78,10 +78,13 @@ export default function ReviewGuideSection({ variant = "full" }) {
         )}
 
         <div className="public-review-actions">
-          <p>방문자 리뷰, 리뷰 사진, 예약 가능 여부는 네이버 플레이스 원문 화면에서 최신 상태를 확인하세요.</p>
+          <p>방문자 리뷰, 사진, 영업 상태, 예약 가능 여부는 네이버 플레이스 원문 화면에서 최신 상태를 확인하세요.</p>
           <a className="button button-solid" href={siteInfo.naverPlaceUrl} target="_blank" rel="noreferrer">
             <span aria-hidden="true">N</span>
             네이버 리뷰 확인
+          </a>
+          <a className="button button-outline" href={`tel:${siteInfo.phone.replaceAll("-", "")}`}>
+            전화 문의
           </a>
         </div>
       </div>

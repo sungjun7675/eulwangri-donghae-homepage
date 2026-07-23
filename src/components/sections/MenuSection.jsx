@@ -1,6 +1,11 @@
 import { menuItems, siteInfo } from "../../data/siteData.js";
 
-const getImagePositionClass = (position) => (position === "center 44%" ? "image-position-center-44" : "");
+const imagePositionClassMap = {
+  "center 44%": "image-position-center-44",
+  "center 54%": "image-position-center-54",
+};
+
+const getImagePositionClass = (position) => imagePositionClassMap[position] || "";
 
 export default function MenuSection({ variant = "compact" }) {
   const isFull = variant === "full";

@@ -35,6 +35,9 @@ export default function HeroSection() {
               <span aria-hidden="true">N</span>
               {naverLabel}
             </a>
+            <a className="button button-outline" href={`tel:${siteInfo.phone.replaceAll("-", "")}`}>
+              전화 문의
+            </a>
           </div>
           <div className="hero-facts" aria-label="방문 전 핵심 정보">
             {heroFacts.map((fact) => (
