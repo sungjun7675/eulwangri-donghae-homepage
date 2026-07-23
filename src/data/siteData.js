@@ -1,9 +1,10 @@
 import heroImage from "../assets/images/hero/hero-seafood-cinematic.jpg";
 import assortedShellfishImage from "../assets/images/menu/real-assorted-shellfish-optimized.jpg";
 import officialCheeseScallopCloseupImage from "../assets/images/menu/official-cheese-scallop-closeup.jpg";
-import officialCheeseScallopTableImage from "../assets/images/menu/official-cheese-scallop-table.jpg";
-import officialSashimiShellfishImage from "../assets/images/menu/official-sashimi-shellfish.jpg";
-import officialSpecialShellfishImage from "../assets/images/menu/official-special-shellfish.jpg";
+import officialCoupleSetMenuImage from "../assets/images/menu/official-couple-set-menu.jpg";
+import officialFamilySetMenuImage from "../assets/images/menu/official-family-set-menu.jpg";
+import officialShellfishCheeseSetMenuImage from "../assets/images/menu/official-shellfish-cheese-set-menu.jpg";
+import officialSpecialSetMenuImage from "../assets/images/menu/official-special-set-menu.jpg";
 import seafoodKalguksuImage from "../assets/images/menu/real-seafood-kalguksu-optimized.jpg";
 import shrimpShellfishImage from "../assets/images/menu/real-shrimp-shellfish-optimized.jpg";
 import spicyRawFishImage from "../assets/images/menu/real-spicy-raw-fish-optimized.jpg";
@@ -193,35 +194,35 @@ export const menuItems = [
     category: "대표 세트",
     serving: "3~4인 추천",
     price: "160,000~250,000원",
-    includes: ["회", "조개구이", "해산물 구성"],
-    description: "회와 조개구이, 해산물 구성을 함께 즐기기 좋은 대표 세트입니다.",
-    note: "인원수와 당일 재료에 따라 세부 구성 확인 권장",
-    image: officialSpecialShellfishImage,
-    alt: "조개와 해산물이 담긴 스페셜 세트 업체 등록 사진",
-    imagePosition: "center 52%",
+    includes: ["활어회", "조개구이", "새우구이", "해산물모듬"],
+    description: "활어회, 조개구이, 새우구이, 해산물모듬을 함께 보는 대표 세트입니다.",
+    note: "네이버 메뉴판 기준 매운탕 또는 칼국수 선택 구성",
+    image: officialSpecialSetMenuImage,
+    alt: "네이버 메뉴에 등록된 스페셜 세트 구성 사진",
+    imagePosition: "center 78%",
   },
   {
     name: "가족 Set",
     category: "세트 메뉴",
     serving: "3~4인 추천",
     price: "140,000~230,000원",
-    includes: ["조개구이", "회", "식사/사이드 확인"],
-    description: "여러 명이 함께 먹기 좋은 해산물 중심의 가족 방문용 세트입니다.",
-    note: "가족 방문과 단체 전 주문 구성 확인 권장",
-    image: officialSashimiShellfishImage,
-    alt: "회와 조개구이가 함께 담긴 가족 세트 업체 등록 사진",
-    imagePosition: "center 50%",
+    includes: ["활어회", "조개구이/조개찜", "새우구이", "해산물모듬"],
+    description: "여러 명이 함께 먹기 좋은 활어회와 조개 중심의 가족 방문용 세트입니다.",
+    note: "네이버 메뉴판 기준 매운탕 또는 칼국수 선택 구성",
+    image: officialFamilySetMenuImage,
+    alt: "네이버 메뉴에 등록된 가족 세트 구성 사진",
+    imagePosition: "center 32%",
   },
   {
     name: "커플 Set",
     category: "세트 메뉴",
     serving: "2인 추천",
     price: "100,000~170,000원",
-    includes: ["조개구이", "회", "해산물"],
-    description: "을왕리 해변 방문 전후로 둘이 즐기기 좋은 세트 구성입니다.",
-    note: "데이트 방문자는 대기와 창가 좌석 가능 여부 확인 권장",
+    includes: ["활어회", "조개구이/조개찜", "매운탕/칼국수"],
+    description: "을왕리 해변 방문 전후로 둘이 즐기기 좋은 커플 세트 구성입니다.",
+    note: "네이버 메뉴판 기준 조개구이 또는 조개찜 선택 구성",
     image: shrimpShellfishImage,
-    alt: "새우와 조개가 담긴 해산물 모둠 사진",
+    alt: "냄비에 담긴 조개찜과 새우가 보이는 커플 세트 사진",
     imagePosition: "center 44%",
   },
   {
@@ -229,21 +230,21 @@ export const menuItems = [
     category: "조개구이",
     serving: "2~3인 추천",
     price: "100,000~140,000원",
-    includes: ["조개구이", "치즈가리비"],
+    includes: ["조개구이", "치즈가리비", "칼국수"],
     description: "조개구이와 치즈가리비를 함께 즐길 수 있는 인기 구성입니다.",
-    note: "치즈가리비 포함 여부와 사이즈는 주문 전 확인",
-    image: officialCheeseScallopTableImage,
-    alt: "치즈가리비와 조개구이가 함께 담긴 업체 등록 사진",
+    note: "네이버 메뉴판 기준 소·중·대 가격 구성",
+    image: officialShellfishCheeseSetMenuImage,
+    alt: "네이버 메뉴에 등록된 조개와 치즈가리비 세트 사진",
     imagePosition: "center 54%",
   },
   {
     name: "해물칼국수",
     category: "식사 메뉴",
     serving: "식사/마무리",
-    price: "판매 여부 확인",
+    price: "12,000원",
     includes: ["해산물", "칼국수"],
-    description: "해산물과 따뜻한 국물이 어울리는 식사 메뉴입니다.",
-    note: "영업일 기준 판매 여부 확인 권장",
+    description: "해산물과 따뜻한 국물이 어울리는 실제 판매 식사 메뉴입니다.",
+    note: "네이버 메뉴판 이미지 기준 12,000원",
     image: seafoodKalguksuImage,
     alt: "해물칼국수 사진",
     imagePosition: "center",
@@ -267,17 +268,31 @@ export const publicReviewItems = [];
 export const menuGalleryItems = [
   {
     name: "스페셜 조개 한상",
-    caption: "네이버 업체 등록 승인 사진 기준의 대표 조개구이 구성",
-    image: officialSpecialShellfishImage,
-    alt: "조개와 해산물이 푸짐하게 담긴 스페셜 조개 한상 사진",
-    imagePosition: "center 52%",
+    caption: "네이버 메뉴 등록 사진 기준의 스페셜 세트 구성",
+    image: officialSpecialSetMenuImage,
+    alt: "스페셜 세트 상차림 사진",
+    imagePosition: "center 78%",
   },
   {
-    name: "회와 조개구이",
-    caption: "회, 조개구이, 치즈 메뉴를 함께 확인할 수 있는 업체 등록 사진",
-    image: officialSashimiShellfishImage,
-    alt: "회와 조개구이가 함께 놓인 상차림 사진",
-    imagePosition: "center 50%",
+    name: "가족 세트 상차림",
+    caption: "네이버 메뉴 등록 사진 기준의 가족 세트 구성",
+    image: officialFamilySetMenuImage,
+    alt: "가족 세트 상차림 사진",
+    imagePosition: "center 32%",
+  },
+  {
+    name: "커플 세트 구성",
+    caption: "네이버 메뉴 등록 사진 기준의 커플 세트 구성",
+    image: officialCoupleSetMenuImage,
+    alt: "커플 세트 상차림 사진",
+    imagePosition: "center 58%",
+  },
+  {
+    name: "조개찜 한 냄비",
+    caption: "커플 세트에서 선택 가능한 조개찜 느낌을 보여주는 사진",
+    image: shrimpShellfishImage,
+    alt: "냄비에 담긴 조개찜과 새우 사진",
+    imagePosition: "center 44%",
   },
   {
     name: "치즈키조개 클로즈업",
@@ -288,9 +303,9 @@ export const menuGalleryItems = [
   },
   {
     name: "치즈가리비 테이블",
-    caption: "치즈가리비와 조개구이 구성을 한눈에 보는 업체 등록 사진",
-    image: officialCheeseScallopTableImage,
-    alt: "치즈가리비와 조개구이가 테이블에 놓인 사진",
+    caption: "조개와 치즈가리비 세트를 한눈에 보는 네이버 등록 사진",
+    image: officialShellfishCheeseSetMenuImage,
+    alt: "조개와 치즈가리비가 함께 놓인 세트 사진",
     imagePosition: "center 54%",
   },
   {
@@ -316,7 +331,7 @@ export const menuGalleryItems = [
   },
   {
     name: "해물칼국수",
-    caption: "해산물 식사 메뉴를 찾는 방문자를 위한 식사 사진",
+    caption: "네이버 메뉴판 기준 판매 중인 해물칼국수 사진",
     image: seafoodKalguksuImage,
     alt: "해물칼국수 사진",
     imagePosition: "center",

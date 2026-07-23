@@ -1948,6 +1948,14 @@ main {
   min-height: 500px;
 }
 
+.image-position-center-32 {
+  object-position: center 32%;
+}
+
+.image-position-center-38 {
+  object-position: center 38%;
+}
+
 .image-position-center-44 {
   object-position: center 44%;
 }
@@ -1966,6 +1974,14 @@ main {
 
 .image-position-center-58 {
   object-position: center 58%;
+}
+
+.image-position-center-64 {
+  object-position: center 64%;
+}
+
+.image-position-center-78 {
+  object-position: center 78%;
 }
 
 .gallery-card figcaption {
